@@ -1,0 +1,22 @@
+{
+  "name": "jun-plugins",
+  "description": "Jun의 Claude Code 플러그인 카탈로그",
+  "owner": {
+    "name": "Jun",
+    "url": "https://github.com/mjun94"
+  },
+  "plugins": [
+    {
+      "name": "ops-report",
+      "displayName": "월간 운영 보고서 생성기",
+      "description": "데이터 경로 하나로 시사점 중심 월간 보고서를 생성하고, 분류체계 미확정 팀에는 데이터 기반 분류체계를 제안",
+      "version": "2.1.0",
+      "author": {
+        "name": "Jun"
+      },
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/mjun94/ops-logger-report"
+    }
+  ]
+}

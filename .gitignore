@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 보고서 생성 중간 산출물 (팀별 데이터라 저장소에 올리지 않는다)
+stats.json
+narrative.json
+report.json
+taxonomy.json
+probe.json
+report-work/
+*.html
+!skills/monthly/assets/renderer.html
+!skills/monthly/references/template.html
+
+# 팀 고유 설정 — examples/ 아래 예시만 추적한다
+/profile.json
+/baselines.json
+
+# OS
+.DS_Store

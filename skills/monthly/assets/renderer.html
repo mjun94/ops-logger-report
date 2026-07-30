@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__REPORT_TITLE__</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --brand: #0248ff;
+        --brand-soft: rgba(2, 72, 255, 0.08);
+        --bg: #ffffff;
+        --bg-soft: #f6f8fc;
+        --border: #e4e8ef;
+        --border-strong: #cdd4e0;
+        --text: #0d1426;
+        --text-soft: #4a5775;
+        --text-mute: #8591a8;
+        --good: #11a36c;
+        --good-soft: rgba(17, 163, 108, 0.1);
+        --warn: #d97706;
+        --warn-soft: rgba(217, 119, 6, 0.1);
+        --bad: #dc2626;
+        --bad-soft: rgba(220, 38, 38, 0.1);
+        --old: #94a3b8;
+        --prev: #6366f1;
+        --prev-soft: rgba(99, 102, 241, 0.12);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: var(--bg); color: var(--text);
+        font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased; line-height: 1.55; font-size: 15px;
+      }
+      .layout { display: flex; min-height: 100vh; }
+      .sidebar {
+        width: 260px; background: var(--bg-soft); border-right: 1px solid var(--border);
+        padding: 32px 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+      }
+      .sidebar-brand { font-size: 11px; font-weight: 800; color: var(--brand); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 6px; }
+      .sidebar-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; line-height: 1.35; }
+      .sidebar-period { font-size: 12px; color: var(--text-mute); margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+      .nav-item {
+        display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 2px;
+        color: var(--text-soft); text-decoration: none; font-size: 13px; border-radius: 6px;
+        transition: all 0.12s; border-left: 2px solid transparent;
+      }
+      .nav-item:hover { background: #ecf1f9; color: var(--text); }
+      .nav-item.active { background: var(--brand-soft); color: var(--brand); border-left-color: var(--brand); font-weight: 700; }
+      .nav-num { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-mute); min-width: 20px; }
+      .main { flex: 1; max-width: calc(100vw - 260px); }
+      .slide { min-height: 100vh; padding: 72px 80px 96px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; }
+      .slide-tag {
+        display: inline-block; align-self: flex-start; font-family: "JetBrains Mono", monospace;
+        font-size: 11px; font-weight: 700; color: var(--brand); background: var(--brand-soft);
+        padding: 5px 12px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 0.08em;
+      }
+      .slide-h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+      .slide-h3 { font-size: 18px; font-weight: 700; margin: 28px 0 12px; }
+      .slide-sub { font-size: 16px; color: var(--text-soft); margin-bottom: 28px; max-width: 900px; }
+
+      .cover { background: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%); justify-content: center; position: relative; overflow: hidden; }
+      .cover::before { content: ""; position: absolute; top: -200px; right: -200px; width: 600px; height: 600px; background: radial-gradient(circle, var(--brand-soft) 0%, transparent 70%); pointer-events: none; }
+      .cover-pretitle { font-size: 14px; font-weight: 700; color: var(--brand); letter-spacing: 0.18em; margin-bottom: 18px; }
+      .cover-title { font-size: 60px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px; max-width: 1000px; }
+      .cover-title em { font-style: normal; color: var(--brand); }
+      .cover-sub { font-size: 20px; color: var(--text-soft); font-weight: 500; margin-bottom: 48px; max-width: 800px; }
+      .cover-meta { display: flex; gap: 40px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 28px; max-width: 900px; }
+      .cover-meta-item .k { font-size: 11px; font-weight: 700; color: var(--text-mute); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+      .cover-meta-item .v { font-size: 16px; font-weight: 700; }
+
+      .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 8px 0 24px; }
+      .kpi-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; transition: all 0.15s; }
+      .kpi-card:hover { border-color: var(--brand); box-shadow: 0 4px 20px rgba(2, 72, 255, 0.08); }
+      .kpi-card.brand { background: var(--brand); border-color: var(--brand); }
+      .kpi-card.good { background: var(--good); border-color: var(--good); }
+      .kpi-card.warn { background: var(--warn); border-color: var(--warn); }
+      .kpi-card.bad { background: var(--bad); border-color: var(--bad); }
+      .kpi-card.brand *, .kpi-card.good *, .kpi-card.warn *, .kpi-card.bad * { color: #fff !important; }
+      .kpi-card.brand .kpi-label, .kpi-card.good .kpi-label, .kpi-card.warn .kpi-label, .kpi-card.bad .kpi-label,
+      .kpi-card.brand .kpi-sub, .kpi-card.good .kpi-sub, .kpi-card.warn .kpi-sub, .kpi-card.bad .kpi-sub { color: rgba(255,255,255,0.85) !important; }
+      .kpi-label { font-size: 12px; font-weight: 700; color: var(--text-mute); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+      .kpi-value { font-size: 36px; font-weight: 900; letter-spacing: -0.025em; line-height: 1; margin-bottom: 8px; font-family: "JetBrains Mono", monospace; }
+      .kpi-value .unit { font-size: 18px; font-weight: 700; color: var(--text-mute); margin-left: 4px; }
+      .kpi-sub { font-size: 13px; color: var(--text-soft); }
+
+      .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 8px 0 20px; }
+      .compare-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; position: relative; overflow: hidden; }
+      .compare-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--brand); }
+      .compare-label { font-size: 12px; font-weight: 700; color: var(--text-mute); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+      .compare-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 0; }
+      .compare-row + .compare-row { border-top: 1px dashed var(--border); }
+      .compare-row .name { font-size: 12px; font-weight: 700; color: var(--text-mute); min-width: 36px; }
+      .compare-row .val { font-size: 22px; font-weight: 800; font-family: "JetBrains Mono", monospace; letter-spacing: -0.02em; }
+      .compare-row .unit { font-size: 12px; color: var(--text-mute); font-weight: 600; margin-left: 2px; }
+      .compare-row.old .name, .compare-row.old .val { color: var(--old); }
+      .compare-row.prev .name, .compare-row.prev .val { color: var(--prev); }
+      .compare-row.current .name, .compare-row.current .val { color: var(--brand); }
+      .compare-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; font-family: "JetBrains Mono", monospace; }
+      .compare-delta.up { background: var(--bad-soft); color: var(--bad); }
+      .compare-delta.down { background: var(--good-soft); color: var(--good); }
+      .compare-delta.neutral { background: var(--bg-soft); color: var(--text-mute); }
+
+      .table-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 14px 0; background: #fff; }
+      .table-scroll { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+      thead th { background: var(--bg-soft); font-weight: 700; text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+      tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr:hover { background: var(--brand-soft); }
+      td.num, th.num { text-align: right; font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
+      td.center, th.center { text-align: center; }
+      td.brand { color: var(--brand); font-weight: 700; }
+      td.indent { padding-left: 28px; }
+      tr.total td { background: var(--brand-soft); color: var(--brand); font-weight: 800; border-top: 2px solid var(--brand); }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; font-family: "JetBrains Mono", monospace; }
+      .pill.brand { background: var(--brand-soft); color: var(--brand); }
+      .pill.warn { background: var(--warn-soft); color: var(--warn); }
+      .pill.bad { background: var(--bad-soft); color: var(--bad); }
+      .pill.good { background: var(--good-soft); color: var(--good); }
+      .pill.gray { background: var(--bg-soft); color: var(--text-mute); }
+      .pill.prev { background: var(--prev-soft); color: var(--prev); }
+
+      .insight { background: var(--brand-soft); border-left: 4px solid var(--brand); padding: 16px 22px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+      .insight.warn { background: var(--warn-soft); border-left-color: var(--warn); }
+      .insight.good { background: var(--good-soft); border-left-color: var(--good); }
+      .insight.bad { background: var(--bad-soft); border-left-color: var(--bad); }
+      .insight-title { font-size: 12px; font-weight: 800; color: var(--brand); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+      .insight.warn .insight-title { color: var(--warn); }
+      .insight.good .insight-title { color: var(--good); }
+      .insight.bad .insight-title { color: var(--bad); }
+      .insight ul { margin-left: 18px; }
+      .insight li { margin-bottom: 6px; font-size: 14px; line-height: 1.6; }
+      .insight li:last-child { margin-bottom: 0; }
+      .insight strong { color: var(--brand); font-weight: 800; }
+      .insight.warn strong { color: var(--warn); }
+      .insight.good strong { color: var(--good); }
+      .insight.bad strong { color: var(--bad); }
+
+      .callout { background: #fff; border: 1px solid var(--border-strong); border-radius: 10px; padding: 18px 22px; margin: 14px 0; font-size: 14px; line-height: 1.65; }
+      .callout strong { color: var(--brand); }
+      .callout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 14px 0; }
+
+      .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; margin: 16px 0; }
+      .chart-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; }
+      .chart-card .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+      .chart-card .sub { font-size: 12px; color: var(--text-mute); margin-bottom: 14px; }
+      .chart-box { position: relative; height: 280px; }
+      .chart-box.tall { height: 360px; }
+      .chart-box.short { height: 220px; }
+
+      .note { font-size: 12px; color: var(--text-mute); margin: 2px 0 6px; line-height: 1.6; }
+
+      .takeaway-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 20px 0; }
+      .takeaway-card { padding: 24px 26px; border-radius: 12px; border: 1px solid var(--border); background: #fff; }
+      .takeaway-card.primary { background: var(--brand); border-color: var(--brand); }
+      .takeaway-card.primary * { color: #fff !important; }
+      .takeaway-card.warn { border-left: 4px solid var(--warn); }
+      .takeaway-card.good { border-left: 4px solid var(--good); }
+      .takeaway-card.bad { border-left: 4px solid var(--bad); }
+      .takeaway-num { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 700; color: var(--text-mute); margin-bottom: 8px; }
+      .takeaway-title { font-size: 17px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
+      .takeaway-body { font-size: 13.5px; color: var(--text-soft); line-height: 1.65; }
+      .takeaway-body strong { color: var(--brand); font-weight: 700; }
+
+      .footer { padding: 40px 80px; border-top: 1px solid var(--border); background: var(--bg-soft); text-align: center; color: var(--text-mute); font-size: 12px; }
+
+      @media (max-width: 1100px) {
+        .sidebar { display: none; }
+        .main { max-width: 100vw; }
+        .slide { padding: 56px 32px 72px; }
+        .cover-title { font-size: 44px; }
+        .callout-grid, .takeaway-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-brand" id="sb-brand"></div>
+        <div class="sidebar-title" id="sb-title"></div>
+        <div class="sidebar-period" id="sb-period"></div>
+        <nav id="sb-nav"></nav>
+      </aside>
+      <main class="main" id="main"></main>
+    </div>
+
+    <script id="report-data" type="application/json">__REPORT_JSON__</script>
+    <script>
+      const R = JSON.parse(document.getElementById("report-data").textContent);
+      const GRID = "rgba(0,0,0,0.05)";
+      const F11 = { size: 11 };
+      const TONE = {
+        current: "rgba(2,72,255,0.78)",
+        prev: "rgba(99,102,241,0.6)",
+        old: "rgba(148,163,184,0.6)",
+        older: "rgba(148,163,184,0.45)",
+        brand: "rgba(2,72,255,0.6)",
+        good: "rgba(17,163,108,0.6)",
+        warn: "rgba(217,119,6,0.6)",
+        bad: "rgba(220,38,38,0.6)",
+        muted: "rgba(2,72,255,0.5)",
+      };
+      const LINE = { good: "#11a36c", brand: "#0248ff", warn: "#d97706", bad: "#dc2626" };
+      const PALETTE = ["#0248ff", "#6366f1", "#11a36c", "#d97706", "#94a3b8", "#dc2626", "#cbd5e1", "#0ea5e9", "#a855f7"];
+
+      const el = (tag, cls, html) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (html != null) n.innerHTML = html;
+        return n;
+      };
+
+      // ---------- 블록 렌더러 ----------
+      const renderers = {
+        kpi(b) {
+          const g = el("div", "kpi-grid");
+          (b.items || []).forEach((it) => {
+            const c = el("div", "kpi-card" + (it.tone ? " " + it.tone : ""));
+            c.appendChild(el("div", "kpi-label", it.label || ""));
+            c.appendChild(el("div", "kpi-value", `${it.value ?? ""}${it.unit ? `<span class="unit">${it.unit}</span>` : ""}`));
+            if (it.sub) c.appendChild(el("div", "kpi-sub", it.sub));
+            g.appendChild(c);
+          });
+          return g;
+        },
+        compare(b) {
+          const g = el("div", "compare-grid");
+          (b.cards || []).forEach((card) => {
+            const c = el("div", "compare-card");
+            c.appendChild(el("div", "compare-label", card.label || ""));
+            (card.rows || []).forEach((r) => {
+              const row = el("div", "compare-row " + (r.tone || "current"));
+              row.appendChild(el("span", "name", r.name || ""));
+              row.appendChild(el("span", null, `<span class="val">${r.val}</span>${r.unit ? `<span class="unit">${r.unit}</span>` : ""}`));
+              c.appendChild(row);
+            });
+            if (card.delta) c.appendChild(el("span", "compare-delta " + (card.delta.tone || "neutral"), card.delta.text));
+            g.appendChild(c);
+          });
+          return g;
+        },
+        table(b) {
+          const wrap = el("div", "table-wrap table-scroll");
+          const t = el("table");
+          const thead = el("thead");
+          const htr = el("tr");
+          (b.columns || []).forEach((col) => {
+            const c = typeof col === "string" ? { label: col } : col;
+            htr.appendChild(el("th", c.cls || "", c.label));
+          });
+          thead.appendChild(htr);
+          t.appendChild(thead);
+          const tbody = el("tbody");
+          const cell = (c) => {
+            const o = typeof c === "object" && c !== null ? c : { v: c };
+            let cls = o.cls || "";
+            if (o.indent) cls += " indent";
+            let html = o.v == null ? "" : String(o.v);
+            if (o.pill) html += `${html ? " " : ""}<span class="pill ${o.pill.tone || "gray"}">${o.pill.text}</span>`;
+            return el("td", cls.trim(), html);
+          };
+          (b.rows || []).forEach((r) => {
+            const tr = el("tr");
+            r.forEach((c) => tr.appendChild(cell(c)));
+            tbody.appendChild(tr);
+          });
+          if (b.total) {
+            const tr = el("tr", "total");
+            b.total.forEach((c) => tr.appendChild(cell(c)));
+            tbody.appendChild(tr);
+          }
+          t.appendChild(tbody);
+          wrap.appendChild(t);
+          const frag = document.createDocumentFragment();
+          if (b.heading) frag.appendChild(el("div", "slide-h3", b.heading));
+          frag.appendChild(wrap);
+          if (b.note) frag.appendChild(el("p", "note", b.note));
+          return frag;
+        },
+        charts(b) {
+          const g = el("div", "chart-grid");
+          (b.cards || []).forEach((card, i) => {
+            const c = el("div", "chart-card");
+            if (card.title) c.appendChild(el("div", "title", card.title));
+            if (card.sub) c.appendChild(el("div", "sub", card.sub));
+            const box = el("div", "chart-box" + (card.size ? " " + card.size : ""));
+            const cv = el("canvas");
+            cv.id = card.id || `chart-${Math.random().toString(36).slice(2, 9)}`;
+            box.appendChild(cv);
+            c.appendChild(box);
+            g.appendChild(c);
+            queueMicrotask(() => drawChart(cv, card.chart));
+          });
+          return g;
+        },
+        insight(b) {
+          const d = el("div", "insight" + (b.tone ? " " + b.tone : ""));
+          d.appendChild(el("div", "insight-title", b.title || "시사점"));
+          const ul = el("ul");
+          (b.items || []).forEach((i) => ul.appendChild(el("li", null, i)));
+          d.appendChild(ul);
+          return d;
+        },
+        callouts(b) {
+          const frag = document.createDocumentFragment();
+          if (b.heading) frag.appendChild(el("div", "slide-h3", b.heading));
+          const items = b.items || [];
+          const host = items.length > 1 ? el("div", "callout-grid") : frag;
+          items.forEach((it) => {
+            const c = el("callout" in it ? "div" : "div", "callout");
+            c.innerHTML = (it.title ? `<strong>${it.title}</strong><br />` : "") + (it.body || "");
+            host.appendChild(c);
+          });
+          if (host !== frag) frag.appendChild(host);
+          return frag;
+        },
+        takeaway(b) {
+          const g = el("div", "takeaway-grid");
+          (b.cards || []).forEach((c) => {
+            const card = el("div", "takeaway-card" + (c.tone ? " " + c.tone : ""));
+            if (c.num) card.appendChild(el("div", "takeaway-num", c.num));
+            card.appendChild(el("div", "takeaway-title", c.title || ""));
+            card.appendChild(el("div", "takeaway-body", c.body || ""));
+            g.appendChild(card);
+          });
+          return g;
+        },
+        heading: (b) => el("div", "slide-h3", b.text || ""),
+        note: (b) => el("p", "note", b.text || ""),
+        html: (b) => el("div", null, b.html || ""),
+      };
+
+      // ---------- 차트 ----------
+      function drawChart(canvas, spec) {
+        if (!spec || typeof Chart === "undefined") return;
+        const kind = spec.kind || "bar";
+        const base = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: F11 } },
+            y: { beginAtZero: true, grid: { color: GRID }, ticks: { font: F11 } },
+          },
+        };
+        let config;
+        if (kind === "doughnut") {
+          config = {
+            type: "doughnut",
+            data: {
+              labels: spec.labels,
+              datasets: [{
+                data: spec.datasets[0].data,
+                backgroundColor: spec.colors || PALETTE,
+                borderWidth: 2, borderColor: "#fff",
+              }],
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              cutout: spec.cutout || "58%",
+              plugins: { legend: { position: spec.legend || "right", labels: { font: F11, boxWidth: 12 } } },
+            },
+          };
+        } else {
+          const multi = spec.datasets.length > 1;
+          const datasets = spec.datasets.map((ds) => {
+            const isLine = ds.type === "line";
+            if (isLine) {
+              return {
+                label: ds.label, data: ds.data, type: "line",
+                borderColor: LINE[ds.tone] || LINE.good,
+                backgroundColor: "rgba(17,163,108,0.1)",
+                borderWidth: 2.5, pointRadius: 5,
+                pointBackgroundColor: LINE[ds.tone] || LINE.good,
+                yAxisID: ds.axis || "y2", tension: 0.3,
+              };
+            }
+            let bg;
+            if (ds.colors) bg = ds.colors;
+            else if (spec.highlight) {
+              const hi = new Set(spec.highlight);
+              const on = TONE[spec.highlightTone || "current"];
+              const off = TONE[ds.tone || "muted"];
+              bg = (ctx) => (hi.has(ctx.dataIndex) ? on : off);
+            } else bg = TONE[ds.tone || "current"];
+            return { label: ds.label, data: ds.data, backgroundColor: bg, borderRadius: 4, yAxisID: ds.axis || "y" };
+          });
+          const opts = JSON.parse(JSON.stringify(base));
+          opts.plugins.legend = { display: multi, position: "bottom", labels: { font: F11 } };
+          if (spec.horizontal) {
+            opts.indexAxis = "y";
+            opts.scales = { x: { beginAtZero: true, grid: { color: GRID }, ticks: { font: F11 } }, y: { grid: { display: false }, ticks: { font: F11 } } };
+          }
+          if (spec.datasets.some((d) => d.type === "line")) {
+            opts.scales.y2 = { beginAtZero: true, position: "right", grid: { display: false }, ticks: { font: F11 } };
+          }
+          config = { type: "bar", data: { labels: spec.labels, datasets }, options: opts };
+        }
+        new Chart(canvas, config);
+      }
+
+      // ---------- 조립 ----------
+      function build() {
+        const m = R.meta || {};
+        document.getElementById("sb-brand").textContent = m.org || "";
+        document.getElementById("sb-title").textContent = m.nav_title || m.title || "";
+        document.getElementById("sb-period").textContent = m.period || "";
+        const nav = document.getElementById("sb-nav");
+        const main = document.getElementById("main");
+
+        const slides = [];
+        if (R.cover) {
+          const c = R.cover;
+          const s = el("section", "slide cover");
+          s.id = "cover";
+          s.innerHTML =
+            `<div class="cover-pretitle">${c.pretitle || ""}</div>` +
+            `<h1 class="cover-title">${c.title_html || m.title || ""}</h1>` +
+            `<p class="cover-sub">${c.subtitle || ""}</p>` +
+            `<div class="cover-meta">${(c.meta || []).map((x) => `<div class="cover-meta-item"><div class="k">${x.k}</div><div class="v">${x.v}</div></div>`).join("")}</div>`;
+          main.appendChild(s);
+          slides.push({ id: "cover", nav: c.nav || "표지" });
+        }
+
+        (R.slides || []).forEach((sl) => {
+          const s = el("section", "slide");
+          s.id = sl.id;
+          if (sl.tag) s.appendChild(el("div", "slide-tag", sl.tag));
+          if (sl.h2) s.appendChild(el("h2", "slide-h2", sl.h2));
+          if (sl.lead) s.appendChild(el("p", "slide-sub", sl.lead));
+          (sl.blocks || []).forEach((b) => {
+            const fn = renderers[b.type];
+            if (fn) s.appendChild(fn(b));
+            else console.warn("알 수 없는 블록 타입:", b.type);
+          });
+          main.appendChild(s);
+          slides.push({ id: sl.id, nav: sl.nav || sl.h2 || sl.id });
+        });
+
+        slides.forEach((s, i) => {
+          const a = el("a", "nav-item", `<span class="nav-num">${String(i).padStart(2, "0")}</span>${s.nav}`);
+          a.href = "#" + s.id;
+          nav.appendChild(a);
+        });
+
+        if (R.footer) main.appendChild(el("div", "footer", R.footer));
+
+        const navItems = document.querySelectorAll(".nav-item");
+        const obs = new IntersectionObserver(
+          (entries) => entries.forEach((e) => {
+            if (e.isIntersecting) {
+              navItems.forEach((n) => n.classList.remove("active"));
+              const a = document.querySelector('.nav-item[href="#' + e.target.id + '"]');
+              if (a) a.classList.add("active");
+            }
+          }),
+          { rootMargin: "-40% 0px -55% 0px" }
+        );
+        document.querySelectorAll(".slide").forEach((s) => obs.observe(s));
+      }
+
+      build();
+    </script>
+  </body>
+</html>

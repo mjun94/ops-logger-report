@@ -1,0 +1,64 @@
+{
+  "_comment": "팀별 과거월 확정 수치. 보고서 확정 후 당월 항목을 추가한다. compose.py가 전월 비교 열의 유일한 근거로 사용한다. 아래 값은 형식 설명용 가상 데이터다.",
+  "months": [
+    {
+      "month": "2026-03",
+      "total": 588,
+      "working_days": 21,
+      "daily_avg": 28.0,
+      "duration_mean": 22.4,
+      "duration_median": 8.0
+    },
+    {
+      "month": "2026-04",
+      "total": 534,
+      "working_days": 22,
+      "daily_avg": 24.3,
+      "duration_mean": 13.5,
+      "duration_median": 6.0,
+      "channels": { "chat": 331, "phone": 121, "email": 62, "face": 20 },
+      "types": {
+        "그룹웨어 포털 운영": 218,
+        "전자결재 운영": 112,
+        "계정·조직 관리": 168,
+        "GWS 운영": 36
+      },
+      "watch": { "비밀번호 초기화": 51 }
+    },
+    {
+      "month": "2026-05",
+      "total": 447,
+      "working_days": 18,
+      "daily_avg": 24.8,
+      "duration_mean": 11.6,
+      "duration_median": 5.0,
+      "channels": { "chat": 289, "phone": 92, "email": 46, "face": 20 },
+      "types": {
+        "그룹웨어 포털 운영": 156,
+        "전자결재 운영": 121,
+        "계정·조직 관리": 128,
+        "GWS 운영": 42
+      },
+      "organizations": {
+        "계열사 A": 82,
+        "계열사 B": 71,
+        "계열사 C": 64,
+        "계열사 D": 58,
+        "계열사 E": 49,
+        "샘플테크": 33,
+        "계열사 F": 20,
+        "계열사 G": 15,
+        "계열사 H": 11
+      },
+      "assignees": {
+        "담당자 A": 198,
+        "담당자 B": 142,
+        "담당자 C": 34,
+        "담당자 D": 26,
+        "담당자 E": 25,
+        "담당자 F": 22
+      },
+      "watch": { "비밀번호 초기화": 47 }
+    }
+  ]
+}
