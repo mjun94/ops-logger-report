@@ -371,6 +371,9 @@ def main():
                 "proposed_taxonomy": (taxonomy or {}).get("taxonomy"),
             },
             "flags": {
+                # 프로필 없이도 기본 필드 매핑으로 집계가 통과할 수 있다.
+                # 그 경우 팀명·분류체계·해석 관점이 전부 비므로 스킬이 셋업을 먼저 돌려야 한다.
+                "profile_found": bool(profile_path),
                 "has_started_at": has_started,
                 "duration_available": duration_all is not None,
                 "requester_name_available": bool(profile["fields"].get("requester_name")),
