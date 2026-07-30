@@ -16,7 +16,19 @@ argument-hint: "<데이터.json 경로>"
 python3 "${CLAUDE_SKILL_DIR}/../monthly/scripts/init_profile.py" <데이터.json>
 ```
 
-데이터 파일과 같은 폴더의 상위(관례상 팀 작업 폴더)에 만들려면 `--out-dir`를 준다. 기본은 현재 위치다.
+`profile.json`·`baselines.json`이 생성될 위치는 **데이터 경로에서 팀 루트를 추정해** 정한다 — `data/` 폴더(연도 폴더가 끼어도 무관)의 상위, 없으면 데이터 파일이 있는 폴더다. 다른 곳에 두려면 `--out-dir`를 준다.
+
+권장 팀 폴더 구조는 이렇다. `report/`·`report-work/`는 첫 보고서를 만들 때 자동으로 생긴다.
+
+```
+우리팀-운영보고/                    ← 팀 루트 (profile.json 위치)
+├── profile.json / baselines.json
+├── data/2026/requests_202607.json
+├── report/2026/…보고서.html
+└── report-work/
+```
+
+데이터를 `data/<연도>/`에 넣도록 안내한다. 이미 평면 `data/`로 쌓아 온 팀은 그대로 둬도 동작한다.
 
 이 스크립트가 자동으로 판정하는 것:
 

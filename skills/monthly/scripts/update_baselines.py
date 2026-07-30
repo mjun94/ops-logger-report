@@ -13,7 +13,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import find_config, load_json  # noqa: E402
+from _common import find_config, find_team_root, load_json  # noqa: E402
 
 
 def main():
@@ -25,9 +25,11 @@ def main():
 
     stats = load_json(args.stats)
     narrative = load_json(args.narrative) if args.narrative else {}
-    path, how = find_config("baselines", args.stats, args.baselines)
+    # 원본 데이터 경로를 기준으로 찾는다. stats.json은 report-work/ 안이라 기준이 될 수 없다.
+    src = (stats.get("meta") or {}).get("source_file") or args.stats
+    path, how = find_config("baselines", src, args.baselines)
     if not path:
-        path = os.path.join(os.path.dirname(os.path.abspath(args.stats)) or ".", "baselines.json")
+        path = os.path.join(find_team_root(src), "baselines.json")
         how = "새로 생성"
     data = load_json(path) if os.path.isfile(path) else {"months": []}
     data.setdefault("months", [])

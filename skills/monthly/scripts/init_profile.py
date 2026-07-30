@@ -15,7 +15,7 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import extract_rows  # noqa: E402
+from _common import extract_rows, infer_team_root  # noqa: E402
 
 # 필드 후보 (앞쪽일수록 우선)
 ALIASES = {
@@ -52,7 +52,8 @@ def nonempty_ratio(rows, field):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data")
-    ap.add_argument("--out-dir", default=".")
+    ap.add_argument("--out-dir", default=None,
+                    help="생략하면 데이터 경로에서 팀 루트를 추정한다 (data/ 의 상위)")
     ap.add_argument("--team", default=None)
     ap.add_argument("--org", default=None)
     ap.add_argument("--force", action="store_true")
@@ -128,9 +129,10 @@ def main():
     }
     profile["fields"] = {k: v for k, v in profile["fields"].items() if v}
 
-    os.makedirs(args.out_dir, exist_ok=True)
-    ppath = os.path.join(args.out_dir, "profile.json")
-    bpath = os.path.join(args.out_dir, "baselines.json")
+    out_dir = args.out_dir or infer_team_root(args.data)
+    os.makedirs(out_dir, exist_ok=True)
+    ppath = os.path.join(out_dir, "profile.json")
+    bpath = os.path.join(out_dir, "baselines.json")
     if os.path.exists(ppath) and not args.force:
         sys.exit(f"이미 존재합니다: {ppath} (덮어쓰려면 --force)")
     with open(ppath, "w", encoding="utf-8") as f:

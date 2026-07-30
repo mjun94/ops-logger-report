@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import find_config, load_json  # noqa: E402
+from _common import find_config, find_team_root, load_json, report_path, resolve_out  # noqa: E402
 
 CH_LABELS = {"chat": "Chat", "phone": "Phone", "email": "Email", "face": "Face (대면)"}
 TONES = ["older", "old", "prev"]  # 과거월 색상 (오래된 순)
@@ -61,11 +61,12 @@ def delta_pill(cur, prev):
 
 
 class Composer:
-    def __init__(self, stats, narrative, profile, baselines, authored):
+    def __init__(self, stats, narrative, profile, baselines, authored, root=None):
         self.s = stats
         self.n = narrative or {}
         self.p = profile or {}
         self.authored = authored
+        self.root = root or os.getcwd()
         self.month = stats["meta"]["month"]
         self.ml = mlabel(self.month)
         self.total = stats["total"]
@@ -573,12 +574,15 @@ class Composer:
         slides = [self.s_summary(), self.s_trend(), self.s_channel(), self.s_type(),
                   self.s_company(), self.s_assignee(), self.s_requester(), self.s_peak(), self.s_takeaway()]
         title = f"{self.p.get('report_title', '운영 현황 보고')} — {self.month[:4]}년 {int(self.month[5:7])}월 보고"
+        stamp = self.authored.replace("20", "", 1) if self.authored.startswith("20") else self.authored
+        filename = f"{self.p.get('short_title', '운영 보고')} {self.ml} 보고서({stamp}).html"
         return {
             "meta": {"org": meta.get("org"), "team": meta.get("team"), "title": title,
                      "nav_title": f"{self.p.get('short_title', '운영 보고')} {self.ml}",
                      "period": f"{self.month.replace('-', '.')}", "total": self.total, "basis": "요청일 기준",
-                     "filename": f"{self.p.get('short_title', '운영 보고')} {self.ml} 보고서"
-                                 f"({self.authored.replace('20', '', 1) if self.authored.startswith('20') else self.authored}).html"},
+                     "filename": filename,
+                     # build_report.py가 쓸 최종 경로. 팀 루트 기준이라 실행 위치와 무관하다.
+                     "output_path": report_path(self.root, self.month, filename)},
             "cover": self.cover(),
             "slides": [s for s in slides if s],
             "footer": f"{self.ml} 운영 보고 · {meta.get('org') or ''} {meta.get('team') or ''} · {self.authored} · 총 {self.total}건",
@@ -606,12 +610,16 @@ def main():
     print(f"프로필:     {ppath or '없음 (기본값)'} ({phow})", file=sys.stderr)
     n_months = len(baselines.get("months") or [])
     print(f"베이스라인: {bpath or '없음 (첫 보고서로 생성)'} ({bhow}, {n_months}개월)", file=sys.stderr)
+    root = find_team_root(src, args.profile)
+    print(f"팀 루트:    {root}", file=sys.stderr)
 
     authored = args.authored or datetime.now().strftime("%Y.%m.%d")
-    report = Composer(stats, narrative, profile, baselines, authored).build()
-    with open(args.out, "w", encoding="utf-8") as f:
+    report = Composer(stats, narrative, profile, baselines, authored, root).build()
+    out = resolve_out(args.out, root)
+    with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"조립 완료: {args.out} (슬라이드 {len(report['slides']) + 1}장, 총 {report['meta']['total']}건)")
+    print(f"조립 완료: {out} (슬라이드 {len(report['slides']) + 1}장, 총 {report['meta']['total']}건)")
+    print(f"보고서 경로: {report['meta']['output_path']}", file=sys.stderr)
 
 
 if __name__ == "__main__":

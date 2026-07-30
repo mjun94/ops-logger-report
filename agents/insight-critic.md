@@ -1,6 +1,6 @@
 ---
 name: insight-critic
-description: 작성된 시사점(narrative.json)이 집계 데이터로 뒷받침되는지 적대적으로 검증하고 수정 지시를 반환하는 검토자. monthly-report 스킬이 insight-analyst 결과를 확정하기 전에 호출한다. narrative.json·stats.json·베이스라인·운영 컨텍스트를 함께 전달받아야 한다.
+description: 작성된 시사점(narrative.json)이 집계 데이터로 뒷받침되는지 적대적으로 검증하고 수정 지시를 반환하는 검토자. monthly 스킬이 insight-analyst 결과를 확정하기 전에 호출한다. narrative.json·stats.json·베이스라인·운영 컨텍스트를 함께 전달받아야 한다.
 tools: Read, Grep, Glob
 model: inherit
 color: orange

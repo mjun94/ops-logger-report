@@ -1,6 +1,6 @@
 ---
 name: insight-analyst
-description: 월간 집계 결과·과거월 베이스라인·운영 컨텍스트를 받아 보고서의 시사점(narrative.json)을 작성하는 운영 데이터 분석가. monthly-report 스킬의 시사점 단계에서 호출한다. stats.json·baselines·컨텍스트(공휴일/부재/이벤트)를 프롬프트로 전달받아야 한다.
+description: 월간 집계 결과·과거월 베이스라인·운영 컨텍스트를 받아 보고서의 시사점(narrative.json)을 작성하는 운영 데이터 분석가. monthly 스킬의 시사점 단계에서 호출한다. stats.json·baselines·컨텍스트(공휴일/부재/이벤트)를 프롬프트로 전달받아야 한다.
 tools: Read, Write, Grep, Glob
 model: inherit
 color: blue

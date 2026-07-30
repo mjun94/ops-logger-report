@@ -12,15 +12,29 @@ argument-hint: "<데이터.json 경로>"
 
 응답·산출물은 한국어. `${CLAUDE_SKILL_DIR}/scripts/`가 숫자와 레이아웃을 전담하고 **당신과 에이전트는 해석만 담당한다.** HTML이나 표를 직접 쓰지 말 것.
 
-중간 산출물은 프로필이 있는 폴더에 만든다. 그래야 다음 달에도 자동 탐색된다.
+## 경로 규칙
+
+**팀 루트는 `profile.json`이 있는 폴더**다. 스크립트가 데이터 경로에서 거슬러 올라가 찾고, `--out`에 준 상대경로를 cwd가 아니라 **팀 루트 기준으로** 해석한다. 그래서 어느 위치에서 실행해도 산출물이 같은 자리에 쌓인다.
+
+```
+우리팀-운영보고/                          ← 팀 루트
+├── profile.json / baselines.json         설정 (평면 유지, 누적 파일)
+├── data/2026/requests_202607.json        입력 — 연도별
+├── report/2026/…보고서(26.08.03).html    산출물 — 연도별 (자동 생성)
+└── report-work/                          중간 산출물 (매 실행 덮어씀)
+```
+
+중간 산출물(`stats.json`·`narrative.json`·`report.json`·`taxonomy.json`)은 항상 `report-work/`에 둔다. 아래 명령의 `--out` 경로를 그대로 쓰면 된다.
+
+연도 폴더 없는 평면 `data/` 구조도 그대로 동작한다.
 
 ## 1. 집계
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> --out stats.json
+python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> --out report-work/stats.json
 ```
 
-`profile.json`은 데이터 폴더 → 그 상위 → 현재 위치 순으로 자동 탐색된다.
+`profile.json`은 데이터 폴더에서 위로 올라가며 자동 탐색된다. 실행 결과에 찾은 프로필과 **팀 루트**가 표시되므로, 이후 단계에서 산출물 위치를 확인할 때 참고한다.
 
 **프로필이 없다는 메시지가 나오면** 사용자에게 묻지 말고 바로 만든다.
 
@@ -50,11 +64,12 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/init_profile.py" <데이터.json>
 
 ## 3. 분류체계 도출 (mode ≠ coded 일 때만)
 
-`taxonomy-builder` 에이전트에 `stats.json`의 `text_corpus`를 넘겨 분류체계와 배정을 받아 `taxonomy.json`으로 저장한 뒤 재집계한다.
+`taxonomy-builder` 에이전트에 `stats.json`의 `text_corpus`를 넘겨 분류체계와 배정을 받아 `report-work/taxonomy.json`으로 저장한 뒤 재집계한다.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
-    --taxonomy taxonomy.json --holidays 2026-06-03,2026-06-06 --out stats.json
+    --taxonomy report-work/taxonomy.json --holidays 2026-06-03,2026-06-06 \
+    --out report-work/stats.json
 ```
 
 제안 분류체계는 04 슬라이드에 자동 수록된다. 에이전트의 `review_points`는 팀이 확정 전에 판단할 경계 사례이므로 사용자에게 그대로 전달한다.
@@ -70,18 +85,23 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
 ## 5. 생성
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/scripts/compose.py" stats.json narrative.json --out report.json
-python3 "${CLAUDE_SKILL_DIR}/scripts/build_report.py" report.json --stats stats.json
+python3 "${CLAUDE_SKILL_DIR}/scripts/compose.py" \
+    report-work/stats.json report-work/narrative.json --out report-work/report.json
+python3 "${CLAUDE_SKILL_DIR}/scripts/build_report.py" \
+    report-work/report.json --stats report-work/stats.json
 ```
 
-`compose.py`가 10슬라이드 목차(표지·Executive Summary·월별 추이·채널·유형·조직·담당자·요청자 집중도·피크 패턴·종합 시사점)와 모든 표·차트를 만든다. `build_report.py`는 표 셀 수·차트 데이터 길이·총건수·각주 누락을 검증하고 실패 시 중단하며, 파일명은 `<제목> N월 보고서(YY.MM.DD).html`로 자동 결정된다.
+`compose.py`가 10슬라이드 목차(표지·Executive Summary·월별 추이·채널·유형·조직·담당자·요청자 집중도·피크 패턴·종합 시사점)와 모든 표·차트를 만든다. `build_report.py`는 표 셀 수·차트 데이터 길이·총건수·각주 누락을 검증하고 실패 시 중단한다.
+
+출력 경로는 `--out` 없이도 자동 결정된다 — `<팀 루트>/report/<대상연도>/<제목> N월 보고서(YY.MM.DD).html`. 연도는 **데이터의 대상월** 기준이라 26년 12월분을 27년 1월에 만들어도 `report/2026/`에 들어간다. 없는 폴더는 만들어진다.
 
 빌드가 실패하면 원인을 고쳐 다시 돌린다. HTML을 손으로 고쳐 우회하지 말 것.
 
 ## 6. 마무리
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/scripts/update_baselines.py" stats.json --narrative narrative.json
+python3 "${CLAUDE_SKILL_DIR}/scripts/update_baselines.py" \
+    report-work/stats.json --narrative report-work/narrative.json
 ```
 
 당월 수치와 다음 달 확인 포인트가 `baselines.json`에 자동 기록된다. **이 단계를 빠뜨리면 다음 달 전월 비교가 끊기므로 반드시 실행한다.**

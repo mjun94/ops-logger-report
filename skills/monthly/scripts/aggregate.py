@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import extract_rows, find_config, load_json  # noqa: E402
+from _common import extract_rows, find_config, find_team_root, load_json, resolve_out  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
@@ -315,6 +315,8 @@ def main():
     profile = deep_merge(DEFAULT_PROFILE, load_json(profile_path) or {})
     print(f"프로필: {profile_path} ({how})" if profile_path
           else "프로필 없음 — 기본 필드 매핑으로 진행합니다.", file=sys.stderr)
+    root = find_team_root(args.data, args.profile)
+    print(f"팀 루트: {root}", file=sys.stderr)
     taxonomy = load_json(args.taxonomy) if args.taxonomy else None
 
     with open(args.data, encoding="utf-8") as f:
@@ -424,9 +426,10 @@ def main():
 
     payload = json.dumps(result, ensure_ascii=False, indent=2)
     if args.out:
-        with open(args.out, "w", encoding="utf-8") as f:
+        out = resolve_out(args.out, root)
+        with open(out, "w", encoding="utf-8") as f:
             f.write(payload)
-        print(f"저장: {args.out} ({len(rows)}건, 분류체계 모드={mode}, 커버리지={coverage}%)")
+        print(f"저장: {out} ({len(rows)}건, 분류체계 모드={mode}, 커버리지={coverage}%)")
     else:
         print(payload)
 

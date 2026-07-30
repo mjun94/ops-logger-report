@@ -2,7 +2,10 @@
 """report.json(수치+서술) + renderer.html → 최종 보고서 HTML.
 
 사용법:
-    python3 build_report.py <report.json> --out "Ops Logger 7월 보고서(26.08.03).html" [--stats stats.json]
+    python3 build_report.py <report.json> [--stats stats.json] [--out <경로>]
+
+--out을 생략하면 compose.py가 report.json의 meta.output_path에 넣어 둔
+<팀 루트>/report/<대상연도>/<파일명>.html 로 쓴다. 없는 폴더는 만든다.
 
 에이전트는 report.json만 작성한다. HTML을 직접 편집하지 않는다.
 빌드 시 구조·정합성을 자동 검증하고, 문제가 있으면 종료 코드 1로 실패시킨다.
@@ -109,7 +112,11 @@ def main():
     title = meta.get("title", "운영 보고서")
     html = html.replace("__REPORT_JSON__", payload).replace("__REPORT_TITLE__", title)
 
-    out = args.out or meta.get("filename") or "운영 보고서.html"
+    # 경로 우선순위: 직접 지정 → compose.py가 정한 report/<연도>/ 경로 → 파일명만
+    out = args.out or meta.get("output_path") or meta.get("filename") or "운영 보고서.html"
+    parent = os.path.dirname(out)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
     slides = len(report.get("slides") or []) + (1 if report.get("cover") else 0)

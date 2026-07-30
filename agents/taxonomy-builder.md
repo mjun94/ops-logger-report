@@ -1,6 +1,6 @@
 ---
 name: taxonomy-builder
-description: 운영 분류체계가 아직 확정되지 않은 팀을 위해, 실제 요청 원문에서 유형 분류체계를 도출하고 각 건을 배정한다. monthly-report 스킬이 분류 코드 커버리지가 낮을 때(mode=none/partial) 호출한다. stats.json의 text_corpus를 프롬프트로 받아야 한다.
+description: 운영 분류체계가 아직 확정되지 않은 팀을 위해, 실제 요청 원문에서 유형 분류체계를 도출하고 각 건을 배정한다. monthly 스킬이 분류 코드 커버리지가 낮을 때(mode=none/partial) 호출한다. stats.json의 text_corpus를 프롬프트로 받아야 한다.
 tools: Read, Write, Grep
 model: inherit
 color: purple
