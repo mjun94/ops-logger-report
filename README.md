@@ -2,15 +2,28 @@
 
 운영 로그 월간 추출 JSON **경로 하나로** 시사점 중심의 월간 운영 보고서(Chart.js 슬라이드 HTML)를 만듭니다. 여러 팀이 각자의 데이터·분류체계 성숙도로 함께 쓰도록 만들었습니다.
 
-## 사용법
+## 빠른 시작
 
-**이거 하나만 기억하면 됩니다.**
+**1. 설치** — Claude Code에서 한 번만.
+
+```
+/plugin marketplace add mjun94/ops-logger-report
+/plugin install ops-report@jun-plugins
+```
+
+**2. 실행** — 월간 추출 JSON 경로를 넘깁니다.
 
 ```
 /ops-report:monthly ./data/requests_202607.json
 ```
 
-프로필이 없으면 그 자리에서 만들고, 있으면 바로 집계합니다. 처음 쓰는 팀도 이 명령 하나로 시작할 수 있습니다.
+**3. 확인** — 집계 오버뷰(대상월·총건수·채널·유형)가 나오면 공휴일·담당자 부재만 답해 주세요. 승인하면 `report/<연도>/` 아래에 HTML 보고서가 생성됩니다.
+
+프로필이 없는 첫 실행이면 그 자리에서 만들고 이어서 진행하므로, 처음 쓰는 팀도 이 세 단계가 전부입니다.
+
+> 로컬 테스트: 저장소를 클론한 뒤 `claude --plugin-dir <클론 경로>`
+
+## 사용법
 
 **경로를 잊었으면 그냥 실행하세요.**
 
@@ -94,15 +107,6 @@
 | `profile.json`·`baselines.json` | 팀 루트에 평면으로 둡니다. `baselines.json`은 누적 파일이라 쪼개면 연초에 전월 비교가 끊깁니다 |
 
 팀 루트는 `profile.json`이 있는 폴더입니다. 스크립트가 데이터 경로에서 거슬러 올라가 찾으므로 **어느 위치에서 실행해도** 보고서가 같은 자리에 쌓입니다.
-
-## 설치
-
-```
-/plugin marketplace add mjun94/ops-logger-report
-/plugin install ops-report@jun-plugins
-```
-
-로컬 테스트: 저장소를 클론한 뒤 `claude --plugin-dir <클론 경로>`
 
 ## 구성
 
