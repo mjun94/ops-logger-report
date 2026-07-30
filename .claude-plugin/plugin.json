@@ -2,7 +2,7 @@
   "name": "ops-report",
   "displayName": "월간 운영 보고서 생성기",
   "description": "운영 로그 월간 추출 JSON 경로 하나로 시사점 중심의 월간 운영 보고서(Chart.js 슬라이드 HTML)를 생성한다. 운영 분류체계가 없는 팀은 실 데이터에서 분류체계를 도출해 함께 제안한다.",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "author": {
     "name": "Jun"
   },

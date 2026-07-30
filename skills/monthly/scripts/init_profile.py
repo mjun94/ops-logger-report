@@ -101,6 +101,17 @@ def main():
             self_org, n = proxy.most_common(1)[0]
             self_evidence = f"타 조직 대행 접수 {n}건의 접수 주체"
 
+    # 05장 분석 축: 여러 조직을 상대하는 팀은 조직별, 한 회사만 담당하는 팀은 요청자 부서별
+    def distinct(field):
+        return len({str(r.get(field)) for r in rows if r.get(field)}) if field else 0
+
+    n_org = max(distinct(fields["requester_org"]), distinct(fields["received_org"]))
+    n_dept = distinct(fields["requester_dept"])
+    org_dimension = "dept" if n_org <= 1 else "company"
+    org_evidence = (f"원요청 조직 {n_org}종 · 요청자 부서 {n_dept}종 → "
+                    + ("한 회사만 담당하는 팀으로 판단, 부서별 분석" if org_dimension == "dept"
+                       else "조직별 분석"))
+
     # 분류체계 성숙도
     l1 = taxonomy.get("l1")
     coverage = round(nonempty_ratio(rows, l1) * 100, 1) if l1 else 0.0
@@ -117,6 +128,10 @@ def main():
         "report_title": "TODO: 보고서 제목 (표지에 표기)",
         "short_title": "운영 보고",
         "org_dimension_label": "조직별",
+        "dept_dimension_label": "부서별",
+        # "auto"로 둬서 매월 데이터로 판정한다. 고정하면 팀이 담당 회사를 늘려도
+        # 축이 그대로 남아 계속 틀린 분석이 나간다. 고정이 필요하면 company/dept로 바꾼다.
+        "org_dimension": "auto",
         "self_org": self_org,
         "fields": {k: v for k, v in fields.items() if v} | {"text": text} |
                   ({"taxonomy": {k: v for k, v in taxonomy.items() if v}} if any(taxonomy.values()) else {}),
@@ -163,6 +178,8 @@ def main():
     print(f"  분류체계     : {mode} (커버리지 {coverage}%, 코드 {len(codes)}종)")
     print(f"  처리시간 산출: {'가능' if fields['started_at'] and fields['completed_at'] else '불가 (started_at 없음)'}")
     print(f"  요청자 집중도: {'요청자명 기준' if fields['requester_name'] else '조직+부서 대체 집계'}")
+    print(f"  05장 분석 축 : {org_dimension} — {org_evidence}")
+    print("                 (auto로 저장됨 — 매월 데이터로 재판정. 고정하려면 company/dept로 변경)")
     if utc_fields:
         print(f"  UTC 저장 필드: {', '.join(utc_fields)}")
     if self_org:

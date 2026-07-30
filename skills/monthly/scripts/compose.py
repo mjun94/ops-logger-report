@@ -71,7 +71,10 @@ class Composer:
         self.ml = mlabel(self.month)
         self.total = stats["total"]
         self.ch_labels = {**CH_LABELS, **(self.p.get("channel_labels") or {})}
-        self.org_label = self.p.get("org_dimension_label", "조직별")
+        # 05장 축은 집계가 정한다 (조직 1종이면 요청자 부서). 라벨도 그에 맞춘다.
+        self.org_dim = stats["meta"].get("org_dimension", "company")
+        self.org_label = (self.p.get("dept_dimension_label", "부서별") if self.org_dim == "dept"
+                          else self.p.get("org_dimension_label", "조직별"))
         # 과거월 (오래된 순), 최대 3개
         self.base = sorted((baselines or {}).get("months", []), key=lambda m: m["month"])
         self.base = [b for b in self.base if b["month"] < self.month][-3:]
@@ -264,7 +267,7 @@ class Composer:
         charts = [{"title": "채널별 건수 비교", "sub": "월별 절대 건수",
                    "chart": {"kind": "bar", "labels": [self.ch_labels.get(k, k) for k in keys], "datasets": ds}}]
         if d.get("duration_overall"):
-            charts.append({"title": f"채널별 평균 처리시간 ({self.ml})", "sub": "대면은 현장 상담 특성상 구조적으로 길다",
+            charts.append({"title": f"채널별 평균 처리시간 ({self.ml})", "sub": "대면은 현장 상담 특성상 구조적으로 김",
                            "chart": {"kind": "bar", "labels": [self.ch_labels.get(k, k) for k in keys],
                                      "datasets": [{"label": "평균 처리시간(분)",
                                                    "data": [self.dur(chan[k].get("duration")) or 0 for k in keys],
@@ -283,7 +286,7 @@ class Composer:
                       {"v": f"{v['self_internal']} ({pct(v['self_internal'], v['total'])}%)", "cls": "num"}]
                      for ch, v in route["by_channel"].items()]
             blocks.append({"type": "table", "heading": f"유입 경로 세분화 ({self.ml})", "columns": rcols, "rows": rrows,
-                           "note": "요청자 소속과 원요청 조직을 함께 사용해 직접 요청과 대행 요청을 분리했습니다."})
+                           "note": "요청자 소속과 원요청 조직을 함께 사용해 직접 요청과 대행 요청을 분리함."})
         b = self.insight_block("channel")
         if b:
             blocks.append(b)
@@ -302,14 +305,14 @@ class Composer:
             src = d.get("type_sources") or {}
             coded_n, inferred_n = src.get("coded", 0), src.get("inferred", 0)
             if coded_n:
-                lead = (f"<strong>운영 분류체계가 아직 확정되지 않은 상태입니다</strong> (코드 부여 {tax['coverage_pct']}%). "
-                        f"코드가 있는 {coded_n}건은 그대로 쓰고, 나머지 {inferred_n}건은 요청 원문을 근거로 유형을 추정해 집계했습니다.")
+                lead = (f"<strong>운영 분류체계 미확정 상태</strong> (코드 부여 {tax['coverage_pct']}%). "
+                        f"코드가 있는 {coded_n}건은 그대로 사용, 나머지 {inferred_n}건은 요청 원문을 근거로 유형을 추정해 집계함.")
             else:
-                lead = (f"<strong>운영 분류체계가 아직 없는 상태입니다.</strong> "
-                        f"{inferred_n}건 전부를 요청 원문에서 유형을 도출해 집계했습니다.")
-            items = [lead, "추정 분류는 <strong>참고치</strong>입니다. 아래 제안 분류체계를 확정하면 다음 달부터 코드 기반 정식 집계로 전환됩니다."]
+                lead = (f"<strong>운영 분류체계 미보유 상태.</strong> "
+                        f"{inferred_n}건 전부 요청 원문에서 유형을 도출해 집계함.")
+            items = [lead, "추정 분류는 <strong>참고치</strong>임. 아래 제안 분류체계 확정 시 다음 달부터 코드 기반 정식 집계로 전환."]
             if tax.get("unclassified_rows"):
-                items.append(f"원문이 짧거나 맥락이 부족해 판단하지 못한 {tax['unclassified_rows']}건은 미분류로 남겼습니다.")
+                items.append(f"원문이 짧거나 맥락이 부족해 판단하지 못한 {tax['unclassified_rows']}건은 미분류로 남김.")
             blocks.append({"type": "insight", "tone": "warn", "title": "분류체계 안내", "items": items})
 
         # 소수 유형은 프로필 지정에 따라 '기타'로 묶는다 (6월 보고서와 동일한 표 구성)
@@ -371,7 +374,7 @@ class Composer:
                            "columns": ["코드", "유형명", "정의", {"label": "해당 건수", "cls": "num"}],
                            "rows": [[t.get("code", ""), t.get("name", ""), t.get("definition", ""),
                                      {"v": types.get(t.get("name"), {}).get("count", 0), "cls": "num brand"}] for t in proposed],
-                           "note": "실 데이터에서 도출한 제안입니다. 팀 검토 후 확정하면 다음 달부터 코드 기반으로 집계됩니다."})
+                           "note": "실 데이터에서 도출한 제안임. 팀 검토 후 확정 시 다음 달부터 코드 기반 집계로 전환."})
         b = self.insight_block("type")
         if b:
             blocks.append(b)
@@ -383,7 +386,8 @@ class Composer:
         d = self.s
         orgs = d["organizations"]
         top = list(orgs.items())[:10]
-        charts = [{"title": f"{self.org_label} 유입량 ({self.ml}, 상위 {len(top)})", "sub": "원요청 조직 기준",
+        basis = "요청자 부서 기준" if self.org_dim == "dept" else "원요청 조직 기준"
+        charts = [{"title": f"{self.org_label} 유입량 ({self.ml}, 상위 {len(top)})", "sub": basis,
                    "size": "tall",
                    "chart": {"kind": "bar", "horizontal": True, "labels": [k for k, _ in top],
                              "datasets": [{"label": "건수", "data": [v["count"] for _, v in top], "tone": "brand"}]}}]
@@ -395,14 +399,16 @@ class Composer:
                                      "labels": [f"대행 {route['proxy_for_others']}", f"내부 {route['pure_internal']}"],
                                      "colors": ["#0248ff", "#94a3b8"],
                                      "datasets": [{"data": [route["proxy_for_others"], route["pure_internal"]]}]}})
-        cols = [self.org_label.replace("별", "")] + ([{"label": mlabel(self.prev["month"]), "cls": "num"}] if self.prev else []) \
+        # 전월 비교는 같은 축으로 집계된 달만. 축이 바뀌면 이름이 맞지 않아 비교가 무의미하다.
+        prev_cmp = self.prev if (self.prev and (self.prev.get("org_dimension") or "company") == self.org_dim) else None
+        cols = [self.org_label.replace("별", "")] + ([{"label": mlabel(prev_cmp["month"]), "cls": "num"}] if prev_cmp else []) \
             + [{"label": self.ml, "cls": "num"}] + ([{"label": "평균 처리", "cls": "num"}] if d.get("duration_overall") else []) + ["주요 특징"]
         notes = self.slide_narr("company").get("org_notes") or {}
         rows = []
         for k, v in top:
             row = [k]
-            if self.prev:
-                pv = (self.prev.get("organizations") or {}).get(k)
+            if prev_cmp:
+                pv = (prev_cmp.get("organizations") or {}).get(k)
                 row.append({"v": pv if pv is not None else "—", "cls": "num"})
             row.append({"v": v["count"], "cls": "num brand"})
             if d.get("duration_overall"):
@@ -442,7 +448,7 @@ class Composer:
 
         blocks = [
             {"type": "table", "columns": cols, "rows": rows, "total": total,
-             "note": ("평균은 장기 과제 몇 건에 크게 흔들립니다. 담당자 비교는 중앙값이 더 정확합니다."
+             "note": ("평균은 장기 과제 몇 건에 크게 흔들림. 담당자 비교는 중앙값이 더 정확."
                       if d.get("duration_overall") else "")},
             {"type": "charts", "cards": [{"title": f"담당자별 처리 비중 ({self.ml})",
                                           "sub": f"상위 2인 합산 {pct(sum(v['count'] for v in list(asg.values())[:2]), self.total)}%",
@@ -549,24 +555,24 @@ class Composer:
         cards = self.n.get("takeaways") or []
         if cards:
             blocks.append({"type": "takeaway", "cards": cards[:3]})
-        basis = [f"본 보고서는 <strong>요청일 기준 {self.total}건</strong>으로 집계했습니다."]
+        basis = [f"본 보고서는 <strong>요청일 기준 {self.total}건</strong>으로 집계함."]
         flags = self.s["meta"]["flags"]
         if flags.get("undercount_risk"):
             basis.append(f"<strong>주의</strong> — {flags['undercount_risk']}")
         if flags.get("duration_warning"):
             basis.append(f"<strong>처리시간 미산출</strong> — {flags['duration_warning']}")
         else:
-            basis.append("처리시간은 담당자 처리 시작~완료 시각 기준이며, 모든 지표는 한국 표준시(KST)로 산정했습니다.")
+            basis.append("처리시간은 담당자 처리 시작~완료 시각 기준, 모든 지표는 한국 표준시(KST)로 산정.")
         tax = self.s["meta"]["taxonomy"]
         if tax["mode"] != "coded":
-            basis.append(f"유형 분류는 코드 {tax['coverage_pct']}% + 원문 추정 {tax['inferred_rows']}건을 합산한 참고치입니다.")
+            basis.append(f"유형 분류는 코드 {tax['coverage_pct']}% + 원문 추정 {tax['inferred_rows']}건을 합산한 참고치.")
         basis += self.n.get("basis_notes") or []
         blocks.append({"type": "insight", "title": "집계 기준 안내", "items": basis})
         watch = self.n.get("next_month_watch") or []
         if watch:
             blocks.append({"type": "insight", "tone": "warn", "title": "다음 달 확인 포인트", "items": watch})
         return {"id": "takeaway", "nav": "종합 시사점", "tag": "09 — 종합 시사점", "h2": "종합 시사점",
-                "lead": self.n.get("takeaway_lead", f"{self.ml} 데이터에서 확인된 주요 현상과 대응 방향입니다."),
+                "lead": self.n.get("takeaway_lead", f"{self.ml} 데이터에서 확인된 주요 현상과 대응 방향."),
                 "blocks": blocks}
 
     def build(self):

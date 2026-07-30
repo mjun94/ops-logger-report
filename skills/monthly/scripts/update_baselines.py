@@ -47,6 +47,8 @@ def main():
     entry["channels"] = {k: v["count"] for k, v in (stats.get("channels") or {}).items()}
     entry["types"] = {k: v["count"] for k, v in (stats.get("types") or {}).items()}
     entry["organizations"] = {k: v["count"] for k, v in (stats.get("organizations") or {}).items()}
+    # organizations를 어떤 축으로 집계했는지 함께 남긴다. 축이 바뀐 달과는 비교하지 않는다.
+    entry["org_dimension"] = stats["meta"].get("org_dimension", "company")
     entry["assignees"] = {k: v["count"] for k, v in (stats.get("assignees") or {}).items()}
     watch = {w["label"]: w["count"] for w in (stats.get("watch_metrics") or []) if w.get("label")}
     if watch:

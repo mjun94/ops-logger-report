@@ -13,9 +13,67 @@
 import argparse
 import json
 import os
+import re
 import sys
 
 BLOCK_TYPES = {"kpi", "compare", "table", "charts", "insight", "callouts", "takeaway", "heading", "note", "html"}
+
+# 보고서는 명사형 종결(보고서체)로 쓴다. ~습니다/~합니다체가 남았는지 잡는다.
+PROSE_END = re.compile(r"(니다|하세요|해요)[.!?)\s]*$")
+# 사람이 읽는 산문이 담기는 키. 라벨·수치·id는 검사하지 않는다.
+PROSE_KEYS = {"lead", "subtitle", "body", "note", "text"}
+# lead는 한 문장이 원칙. HTML 제거 후 이 길이를 넘으면 해석이 섞였다는 신호다.
+LEAD_MAX = 140
+
+
+def _plain(s):
+    """HTML 태그를 벗긴 순수 텍스트."""
+    return re.sub(r"<[^>]+>", "", s or "").strip()
+
+
+def _prose_strings(node, path, out):
+    """report.json에서 사람이 읽는 문장만 (경로, 값)으로 모은다."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            p = f"{path}.{k}"
+            if isinstance(v, str):
+                if k in PROSE_KEYS:
+                    out.append((p, v))
+            elif k == "items" and isinstance(v, list):
+                for i, item in enumerate(v):
+                    if isinstance(item, str):
+                        out.append((f"{p}[{i}]", item))
+                    else:
+                        _prose_strings(item, f"{p}[{i}]", out)
+            else:
+                _prose_strings(v, p, out)
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            _prose_strings(v, f"{path}[{i}]", out)
+
+
+def check_tone(report):
+    """문체·lead 길이 경고. 빌드를 막지는 않는다 — 문장 판단은 사람과 critic의 몫."""
+    warnings = []
+    found = []
+    _prose_strings(report, "", found)
+    prose = [(p, _plain(s)) for p, s in found if _plain(s)]
+
+    bad = [(p, t) for p, t in prose if PROSE_END.search(t)]
+    if bad:
+        warnings.append(
+            f"보고서체(명사형 종결)가 아닌 문장 {len(bad)}개 — "
+            + "; ".join(f"{p}: \"{t[:40]}…\"" for p, t in bad[:3])
+            + (f" (외 {len(bad) - 3}개)" if len(bad) > 3 else "")
+        )
+    long_leads = [(p, t) for p, t in prose
+                  if p.endswith(".lead") and len(t) > LEAD_MAX]
+    if long_leads:
+        warnings.append(
+            f"lead가 {LEAD_MAX}자를 넘습니다 ({len(long_leads)}개) — 해석은 insights로 옮기세요: "
+            + "; ".join(f"{p}({len(t)}자)" for p, t in long_leads)
+        )
+    return warnings
 
 
 def validate(report, stats=None):
@@ -74,6 +132,7 @@ def validate(report, stats=None):
                                 f"{where}.cards[{ci}].chart.datasets[{di}]: "
                                 f"데이터 {len(ds.get('data') or [])}개 ≠ 라벨 {len(labels)}개"
                             )
+    warnings += check_tone(report)
     return errors, warnings
 
 

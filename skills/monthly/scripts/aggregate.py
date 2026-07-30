@@ -53,6 +53,9 @@ DEFAULT_PROFILE = {
     "utc_fields": ["completed_at", "created_at"],
     # 자사(내부 조직)명. 대행 접수 분해에 사용. null이면 분해 생략
     "self_org": None,
+    # 05장 분석 축. "auto"는 원요청 조직 종류 수로 판단하고, 1종이면 요청자 부서로 바꾼다.
+    # "company"/"dept"로 고정할 수도 있다.
+    "org_dimension": "auto",
     # {"01": "GWS 운영", ...} 형태. 비어 있으면 코드값 그대로 사용
     "taxonomy_map": {},
     # [{"label": "비밀번호 초기화", "level": "l3", "code": "020601"}]
@@ -129,6 +132,13 @@ class Aggregator:
     def requester_org(self, row):
         return self.get(row, "requester_org") or self.get(row, "received_org") or "미상"
 
+    def requester_dept(self, row):
+        return self.get(row, "requester_dept") or "미상"
+
+    def distinct_values(self, fn):
+        """"미상"을 뺀 실제 값 종류 수. 분석 축이 의미 있는지 판단하는 데 쓴다."""
+        return len({fn(r) for r in self.rows} - {"미상"})
+
     # ---------- 파생값 ----------
     def compute_durations(self):
         for row in self.rows:
@@ -189,6 +199,8 @@ class Aggregator:
             return None
         received = [r for r in self.rows if self.get(r, "received_org") == self_org]
         proxy = [r for r in received if self.requester_org(r) != self_org]
+        if not proxy:
+            return None          # 대행 접수가 없으면 분해할 게 없다 (한 회사만 담당하는 팀 등)
         by_channel = {}
         for ch in self.profile.get("route_channels") or []:
             sub = [r for r in self.rows if (self.get(r, "channel") or "") == ch]
@@ -340,6 +352,20 @@ def main():
 
     agg = Aggregator(rows, profile, taxonomy)
     agg.compute_durations()
+
+    # 05장 분석 축 — 여러 조직(계열사·고객사)을 상대하는 팀은 조직별로,
+    # 한 회사만 담당하는 팀은 조직별 집계가 막대 하나로 무의미하므로 요청자 부서별로 본다.
+    org_mode = (profile.get("org_dimension") or "auto").lower()
+    n_org = agg.distinct_values(agg.requester_org)
+    n_dept = agg.distinct_values(agg.requester_dept)
+    if org_mode in ("company", "dept"):
+        org_dimension, org_reason = org_mode, "프로필 지정"
+    elif n_org <= 1:
+        org_dimension = "dept"
+        org_reason = f"원요청 조직 {n_org}종 — 한 회사만 담당하는 팀으로 판단해 요청자 부서로 전환"
+    else:
+        org_dimension, org_reason = "company", f"원요청 조직 {n_org}종"
+    org_key = agg.requester_dept if org_dimension == "dept" else agg.requester_org
     mode, coverage, coded_n = agg.taxonomy_mode()
     labels, sources = agg.effective_types()
 
@@ -362,6 +388,9 @@ def main():
             "org": profile.get("org"),
             "month": month,
             "month_distribution": dict(sorted(month_dist.items())),
+            # organizations를 어떤 축으로 집계했는지. compose가 라벨과 전월 비교 가능 여부를 정한다.
+            "org_dimension": org_dimension,
+            "org_dimension_reason": org_reason,
             "taxonomy": {
                 "mode": mode,
                 "coverage_pct": coverage,
@@ -374,19 +403,22 @@ def main():
                 # 프로필 없이도 기본 필드 매핑으로 집계가 통과할 수 있다.
                 # 그 경우 팀명·분류체계·해석 관점이 전부 비므로 스킬이 셋업을 먼저 돌려야 한다.
                 "profile_found": bool(profile_path),
+                # 조직도 부서도 한 종류뿐이면 05장은 막대 하나다. 해석하지 말라는 신호.
+                "org_dimension_degenerate": n_org <= 1 and n_dept <= 1,
                 "has_started_at": has_started,
                 "duration_available": duration_all is not None,
                 "requester_name_available": bool(profile["fields"].get("requester_name")),
                 "hourly_basis": hour_basis,
                 "baseline_required": True,
+                # 아래 두 문구는 09장 집계 기준 안내에 각주로 실린다 — 보고서 문체(명사형 종결)를 따른다.
                 "undercount_risk": (
-                    "추출 쿼리가 로깅일(created_at) 기준으로 보입니다. 월말 요청이 익월 로깅으로 "
-                    "누락돼 과소집계일 수 있으니 요청일 기준으로 재추출을 권합니다."
+                    "추출 쿼리가 로깅일(created_at) 기준으로 보임. 월말 요청이 익월 로깅으로 "
+                    "누락돼 과소집계 가능성 있음. 요청일 기준 재추출 권장."
                     if undercount_risk else None
                 ),
                 "duration_warning": (
                     None if has_started else
-                    "started_at이 없어 처리시간을 산출할 수 없습니다. 다른 필드로 대체 계산하지 마세요."
+                    "started_at 부재로 처리시간 산출 불가. 다른 필드로 대체 계산 금지."
                 ),
             },
         },
@@ -405,7 +437,7 @@ def main():
         },
         "type_sources": dict(Counter(sources)),
         "watch_metrics": agg.watch_metrics(),
-        "organizations": agg.by_dimension(agg.requester_org),
+        "organizations": agg.by_dimension(org_key),
         "route": agg.route_breakdown(),
         "assignees": assignees,
         "requester_concentration": agg.concentration(assignees),
@@ -433,6 +465,7 @@ def main():
         with open(out, "w", encoding="utf-8") as f:
             f.write(payload)
         print(f"저장: {out} ({len(rows)}건, 분류체계 모드={mode}, 커버리지={coverage}%)")
+        print(f"05장 분석 축: {org_dimension} — {org_reason}", file=sys.stderr)
     else:
         print(payload)
 

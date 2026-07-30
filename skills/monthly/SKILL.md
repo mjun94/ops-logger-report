@@ -85,35 +85,69 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/init_profile.py" <데이터.json>
 | 채널 구성 | `channels` 상위 |
 | 유형 구성 | `types` 상위 3개 + `taxonomy.mode` (`coded` 아니면 "분류체계를 도출해 제안 예정") |
 | 처리시간 | `duration_overall` 있으면 평균·중위, 없으면 "산출 불가" |
+| 05장 분석 축 | `meta.org_dimension` — `company`면 조직별, `dept`면 **요청자 부서별**(한 회사만 담당하는 팀). `meta.org_dimension_reason`을 근거로 함께 보여주고, 의도와 다르면 프로필 `org_dimension`을 고정하면 된다고 알려 준다 |
 | 데이터 한계 | 위 표에서 걸린 항목 |
 | 저장 위치 | `report/<대상연도>/` |
 
-이어서 데이터에 없는 정보를 **같은 메시지에서 한 번에** 묻는다. 1~2는 필수다.
+### 확인 질문 — 같은 메시지에서 한 번에
 
-1. 해당 월 **공휴일·임시공휴일** — 달력으로 1차 산출해 제시하고 확인만 받는다
-2. **담당자 부재 일정** (연차·워크샵·교육) — 처리량 해석에 필수
-3. **특이 이벤트** (배포·조직개편·감사 등)
-4. **전월 팔로업** — `baselines.json` 마지막 달의 `next_month_watch`를 읽어 그대로 확인한다
+데이터에 없어 물어볼 수밖에 없는 정보다. **추상적으로 "부재 일정 있으셨나요?"라고만 묻지 말 것.** 답변 예시를 함께 보여주고, 공휴일은 달력으로 1차 산출해 제시해 확인만 받는다. 그래야 한 번에 답이 온다.
+
+아래 형태로 오버뷰 표 다음에 붙인다.
+
+> **확인이 필요한 것** — 데이터에 없는 정보라 물어볼 수밖에 없습니다.
+>
+> **1. 공휴일** — 확인만 해 주세요
+> 7월 공휴일 없음 → 실운영일 **23일**로 계산했습니다. 임시공휴일·회사 휴무가 있었으면 알려 주세요.
+>
+> **2. 담당자 부재 일정** — 처리량 증감을 성과로 오독하지 않으려면 필요합니다
+> 예: `담당자 A 7/7~7/11 연차, 담당자 B 7/24 교육`
+>
+> **3. 특이 이벤트**
+> 예: `7/15 그룹웨어 v3 배포`, `7월 말 조직개편`, `7/20~7/22 내부감사`
+>
+> **4. 전월 확인 포인트**
+> 지난달 남긴 항목: "AI 도구 문의 증가 지속 여부" — 이번 달 어땠나요?
+>
+> 없었으면 **"없음"**만 답해 주셔도 됩니다. 이대로 진행할까요?
+
+- 공휴일이 있는 달은 날짜를 나열해 제시한다 (예: `6/3 지방선거, 6/6 현충일(토)`).
+- 4번은 `baselines.json` 마지막 달에 `next_month_watch`가 있을 때만 넣는다. 없으면 항목을 빼서 질문을 짧게 유지한다.
+- **"없음"도 유효한 답이다.** 매달 반복되는 질문이라 답변 부담을 늘리지 않는다.
 
 답변이 오면 그것을 승인으로 본다. **대상월이나 파일이 틀렸다고 하면 멈추고 0단계로 돌아간다.**
 
-## 3. 분류체계 도출 (mode ≠ coded 일 때만)
+## 3. 답변 반영 — 재집계
 
-`taxonomy-builder` 에이전트에 `stats.json`의 `text_corpus`를 넘겨 분류체계와 배정을 받아 `report-work/taxonomy.json`으로 저장한 뒤 재집계한다.
+받은 답을 여기서 데이터에 반영한다. **공휴일을 받았으면 반드시 재집계한다** — 실운영일이 바뀌면 일평균과 요일 해석이 전부 달라진다.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
-    --taxonomy report-work/taxonomy.json --holidays 2026-06-03,2026-06-06 \
+    --holidays 2026-07-17 --out report-work/stats.json
+```
+
+`taxonomy.mode`가 `coded`가 아니면 분류체계를 먼저 도출해 같은 재집계에 함께 넣는다. `taxonomy-builder`에 `stats.json`의 `text_corpus`를 넘겨 받은 결과를 `report-work/taxonomy.json`으로 저장한다.
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
+    --taxonomy report-work/taxonomy.json --holidays 2026-07-17 \
     --out report-work/stats.json
 ```
 
-제안 분류체계는 04 슬라이드에 자동 수록된다. 에이전트의 `review_points`는 팀이 확정 전에 판단할 경계 사례이므로 사용자에게 그대로 전달한다.
+제안 분류체계는 04 슬라이드에 자동 수록된다. `review_points`는 팀이 확정 전에 판단할 경계 사례이므로 사용자에게 그대로 전달한다.
 
-공휴일이 확정됐다면 mode와 무관하게 `--holidays`를 붙여 재집계한다.
+**부재 일정과 특이 이벤트는 재집계 대상이 아니다.** 다음 단계에서 이렇게 쓰인다.
+
+| 받은 답 | 반영되는 곳 |
+|---|---|
+| 공휴일 | `--holidays` 재집계 → 실운영일·일평균·요일 평균 |
+| 담당자 부재 | `insight-analyst`에 컨텍스트로 전달 → `slides.assignee.absence`로 06장 부재 일정표에 실림 |
+| 특이 이벤트 | `insight-analyst`에 컨텍스트로 전달 → 증감 해석의 근거. 배포 사실이 없으면 효과를 단정하지 않는다 |
+| 전월 팔로업 답변 | 09장 시사점과 다음 달 `next_month_watch`에 반영 |
 
 ## 4. 시사점 작성 — 이 보고서의 핵심
 
-`insight-analyst`에 `stats.json`, `baselines.json`, 2단계 컨텍스트, 프로필 `insight_frame`을 전달해 `narrative.json`을 받는다.
+`insight-analyst`에 `stats.json`, `baselines.json`, **2단계에서 받은 부재 일정·특이 이벤트·전월 팔로업 답변**, 프로필 `insight_frame`을 전달해 `narrative.json`을 받는다. 사용자가 "없음"이라고 답했으면 그 사실도 그대로 전달한다 — 부재가 없었다는 정보 자체가 처리량 해석의 근거다.
 
 이어서 `insight-critic`에 `narrative.json` + 같은 입력을 넘겨 검증한다. `verdict: revise`면 `blocking` 지적을 `insight-analyst`에 되돌려 수정본을 받는다. **최대 2회** 반복하고, 그래도 남으면 해당 주장을 삭제하거나 가설로 낮춘다.
 
