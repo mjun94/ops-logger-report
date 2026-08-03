@@ -15,7 +15,7 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import extract_rows, infer_team_root  # noqa: E402
+from _common import extract_rows, find_taxonomy_doc, infer_team_root  # noqa: E402
 
 # 필드 후보 (앞쪽일수록 우선)
 ALIASES = {
@@ -174,8 +174,10 @@ def main():
         print("\n[매핑하지 못한 필드] — 데이터에 없으면 그대로 두면 됩니다")
         for k in missing:
             print(f"  {k}")
+    tax_doc = find_taxonomy_doc(out_dir)
     print("\n[진단]")
     print(f"  분류체계     : {mode} (커버리지 {coverage}%, 코드 {len(codes)}종)")
+    print(f"  분류체계 문서: {'taxonomy.md 있음 — 코드 없는 건은 이 문서 기준 배정' if tax_doc else '없음 (팀 루트/taxonomy.md)'}")
     print(f"  처리시간 산출: {'가능' if fields['started_at'] and fields['completed_at'] else '불가 (started_at 없음)'}")
     print(f"  요청자 집중도: {'요청자명 기준' if fields['requester_name'] else '조직+부서 대체 집계'}")
     print(f"  05장 분석 축 : {org_dimension} — {org_evidence}")

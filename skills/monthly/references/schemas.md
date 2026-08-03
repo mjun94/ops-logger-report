@@ -84,12 +84,21 @@
 
 **매월 보고서 확정 후 당월 항목을 추가하는 것이 이 파이프라인의 유일한 수작업이다.** 빠뜨리면 다음 달 비교가 끊긴다.
 
-## taxonomy.json — 도출된 분류체계
+## taxonomy.md — 팀 확정 분류체계 문서
+
+팀이 문서로 확정한 운영 분류체계. **팀 루트(profile.json 옆)에 고정 이름 `taxonomy.md`로** 두면 자동 발견된다(`stats.json`의 `meta.taxonomy.doc_found`).
+
+- 있으면: `coded`가 아닌 팀에서 taxonomy-builder가 체계를 도출하지 않고 이 문서의 유형으로 배정만 한다(배정 모드). `coded` 팀에서는 집계에 쓰이지 않고 insight-analyst의 해석 컨텍스트로만 쓰인다.
+- 형식: 자유 형식도 동작하지만 [taxonomy-template.md](taxonomy-template.md)의 권장 템플릿(유형별 정의·키워드·예시·경계 규칙)을 따를수록 배정이 정확하다.
+- 생성 경로: setup에서 팀이 준 체계를 변환해 만들거나, monthly에서 도출·제안된 체계를 팀이 확정할 때 스킬이 저장한다.
+
+## taxonomy.json — 유형 배정 결과
 
 `taxonomy-builder` 에이전트가 생성한다. `assignments`는 `stats.json`의 `text_corpus`와 같은 길이·순서여야 한다.
 
 ```json
 {
+  "source": "derived",
   "taxonomy": [
     { "code": "A", "name": "계정·권한 관리", "definition": "…", "keywords": ["계정"], "examples": ["…"] }
   ],
@@ -100,6 +109,8 @@
   "review_points": ["팀이 확정 전에 판단할 경계 사례"]
 }
 ```
+
+`source`는 `"derived"`(데이터에서 도출한 제안) 또는 `"doc"`(taxonomy.md 기준 배정). 04·09장 표기가 이 값으로 갈린다 — `derived`는 "제안 분류체계", `doc`은 "팀 확정 분류체계 기준 배정".
 
 ## narrative.json — 시사점
 

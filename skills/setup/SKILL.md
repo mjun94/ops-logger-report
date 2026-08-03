@@ -21,6 +21,7 @@ python3 "${CLAUDE_SKILL_DIR}/../monthly/scripts/init_profile.py" <데이터.json
 ```
 우리팀-운영보고/                    ← 팀 루트 (profile.json 위치)
 ├── profile.json / baselines.json
+├── taxonomy.md                     팀 확정 분류체계 문서 (선택 — 3단계에서 만들 수 있다)
 ├── data/…                          사용자가 정리한 대로
 ├── report/<대상연도>/…보고서.html   첫 보고서 때 자동 생성
 └── report-work/                    첫 보고서 때 자동 생성
@@ -35,6 +36,7 @@ python3 "${CLAUDE_SKILL_DIR}/../monthly/scripts/init_profile.py" <데이터.json
 - **채널 목록** — 실제 값에서 추출
 - **자사명** — 접수 조직과 원요청 조직이 다른 건에서 가장 흔한 접수 주체
 - **분류체계 성숙도** — 코드 커버리지로 `coded`/`partial`/`none` 판정
+- **분류체계 문서** — 팀 루트에 `taxonomy.md`가 이미 있는지
 - **추출 기준 위험** — 로깅일 기준 추출이면 과소집계 경고
 
 ## 2. 결과 보고 & 확인
@@ -43,7 +45,7 @@ python3 "${CLAUDE_SKILL_DIR}/../monthly/scripts/init_profile.py" <데이터.json
 
 - 처리시간 산출 가능 여부 (`started_at` 유무) — 불가하면 추출 쿼리에 추가를 권한다
 - 요청자 집중도 집계 단위 (요청자명 유무)
-- 분류체계 성숙도 — `none`이면 첫 보고서에서 데이터 기반으로 도출·제안한다고 알린다
+- 분류체계 성숙도 — `none`/`partial`이면 "체계를 문서로 갖고 있으면 `taxonomy.md`로 넣어 그 기준으로 배정하고, 없으면 첫 보고서에서 데이터 기반으로 도출·제안한다"고 알린다
 
 매핑이 틀린 필드가 있으면 사용자에게 확인받아 `profile.json`을 고친다.
 
@@ -60,6 +62,16 @@ python3 "${CLAUDE_SKILL_DIR}/../monthly/scripts/init_profile.py" <데이터.json
 | `insight_frame` | 이 팀 보고서에서 매월 유지할 해석 관점 (없으면 첫 보고서 후 채워도 된다) |
 | `taxonomy_map` | 분류 코드가 있으면 코드 → 유형명 매핑 |
 | `watch_metrics` | 매월 추적할 지표 (예: 비밀번호 초기화 건수) — 없으면 생략 |
+| 운영 분류체계 문서 | 팀이 문서로 확정한 분류체계가 있는지. 있으면 내용을 붙여넣거나 파일 경로를 받는다 (아래 참조) |
+
+### 분류체계 문서를 받았으면 → taxonomy.md 작성
+
+사용자가 체계를 붙여넣거나 경로를 주면, [../monthly/references/taxonomy-template.md](../monthly/references/taxonomy-template.md)의 템플릿 형식으로 변환해 **팀 루트에 `taxonomy.md`로 저장**하고 결과를 보여줘 확인받는다.
+
+- **내용을 창작하지 않는다.** 유형명·정의는 팀이 준 그대로 옮기고, 팀 용어를 유지한다. 정의·키워드가 없는 유형은 비워 두고 채울지 물어본다.
+- 이후 매달 monthly에서 이 문서 기준으로 배정된다고 알린다.
+- 데이터가 이미 `coded`인 팀이면 역할이 다르다는 것도 알린다 — 집계는 데이터 코드 기준이고, 문서는 시사점 작성 시 유형 정의·용어 참고로만 쓰인다.
+- "없어요"도 유효한 답이다. 강요하지 말고 넘어간다 — 첫 보고서에서 도출·제안이 동작한다.
 
 ## 4. 과거 보고서가 있으면 베이스라인 채우기
 

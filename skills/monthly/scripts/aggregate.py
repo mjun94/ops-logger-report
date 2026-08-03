@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _common import extract_rows, find_config, find_team_root, load_json, resolve_out  # noqa: E402
+from _common import extract_rows, find_config, find_taxonomy_doc, find_team_root, load_json, resolve_out  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
@@ -330,6 +330,9 @@ def main():
     root = find_team_root(args.data, args.profile)
     print(f"팀 루트: {root}", file=sys.stderr)
     taxonomy = load_json(args.taxonomy) if args.taxonomy else None
+    taxonomy_doc = find_taxonomy_doc(root)
+    print(f"분류체계 문서: {taxonomy_doc}" if taxonomy_doc
+          else "분류체계 문서 없음 (팀 루트/taxonomy.md)", file=sys.stderr)
 
     with open(args.data, encoding="utf-8") as f:
         source_key, rows = extract_rows(json.load(f))
@@ -397,6 +400,12 @@ def main():
                 "coded_rows": coded_n,
                 "inferred_rows": sum(1 for s in sources if s == "inferred"),
                 "unclassified_rows": sum(1 for s in sources if s == "none"),
+                # 팀이 문서로 확정한 분류체계(팀 루트/taxonomy.md) 존재 여부.
+                # 있으면 taxonomy-builder는 도출 대신 이 문서 기준 배정 모드로 동작한다.
+                "doc_found": bool(taxonomy_doc),
+                "doc_path": taxonomy_doc,
+                # 배정 출처: "doc"(팀 확정 문서 기준 배정) / "derived"(데이터에서 도출한 제안)
+                "source": (taxonomy or {}).get("source"),
                 "proposed_taxonomy": (taxonomy or {}).get("taxonomy"),
             },
             "flags": {

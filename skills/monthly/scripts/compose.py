@@ -304,16 +304,30 @@ class Composer:
         if tax["mode"] != "coded":
             src = d.get("type_sources") or {}
             coded_n, inferred_n = src.get("coded", 0), src.get("inferred", 0)
-            if coded_n:
-                lead = (f"<strong>운영 분류체계 미확정 상태</strong> (코드 부여 {tax['coverage_pct']}%). "
-                        f"코드가 있는 {coded_n}건은 그대로 사용, 나머지 {inferred_n}건은 요청 원문을 근거로 유형을 추정해 집계함.")
+            if tax.get("source") == "doc":
+                # 팀이 확정한 분류체계 문서(taxonomy.md) 기준 배정 — 제안이 아니다.
+                if coded_n:
+                    lead = (f"유형은 <strong>팀 확정 분류체계(taxonomy.md) 기준</strong>으로 배정함. "
+                            f"코드가 있는 {coded_n}건({tax['coverage_pct']}%)은 그대로 사용, "
+                            f"나머지 {inferred_n}건은 요청 원문을 근거로 자동 배정.")
+                else:
+                    lead = (f"유형은 <strong>팀 확정 분류체계(taxonomy.md) 기준</strong>으로 배정함. "
+                            f"{inferred_n}건 전부 요청 원문 기반 자동 배정.")
+                items = [lead, "접수 시 분류 코드가 입력되면 다음 달부터 코드 기반 정식 집계로 전환."]
+                if tax.get("unclassified_rows"):
+                    items.append(f"원문이 짧거나 맥락이 부족해 판단하지 못한 {tax['unclassified_rows']}건은 미분류로 남김.")
+                blocks.append({"type": "insight", "title": "분류체계 안내", "items": items})
             else:
-                lead = (f"<strong>운영 분류체계 미보유 상태.</strong> "
-                        f"{inferred_n}건 전부 요청 원문에서 유형을 도출해 집계함.")
-            items = [lead, "추정 분류는 <strong>참고치</strong>임. 아래 제안 분류체계 확정 시 다음 달부터 코드 기반 정식 집계로 전환."]
-            if tax.get("unclassified_rows"):
-                items.append(f"원문이 짧거나 맥락이 부족해 판단하지 못한 {tax['unclassified_rows']}건은 미분류로 남김.")
-            blocks.append({"type": "insight", "tone": "warn", "title": "분류체계 안내", "items": items})
+                if coded_n:
+                    lead = (f"<strong>운영 분류체계 미확정 상태</strong> (코드 부여 {tax['coverage_pct']}%). "
+                            f"코드가 있는 {coded_n}건은 그대로 사용, 나머지 {inferred_n}건은 요청 원문을 근거로 유형을 추정해 집계함.")
+                else:
+                    lead = (f"<strong>운영 분류체계 미보유 상태.</strong> "
+                            f"{inferred_n}건 전부 요청 원문에서 유형을 도출해 집계함.")
+                items = [lead, "추정 분류는 <strong>참고치</strong>임. 아래 제안 분류체계 확정 시 다음 달부터 코드 기반 정식 집계로 전환."]
+                if tax.get("unclassified_rows"):
+                    items.append(f"원문이 짧거나 맥락이 부족해 판단하지 못한 {tax['unclassified_rows']}건은 미분류로 남김.")
+                blocks.append({"type": "insight", "tone": "warn", "title": "분류체계 안내", "items": items})
 
         # 소수 유형은 프로필 지정에 따라 '기타'로 묶는다 (6월 보고서와 동일한 표 구성)
         other = [k for k in (self.p.get("type_group_other") or []) if k in types]
@@ -370,11 +384,17 @@ class Composer:
 
         proposed = tax.get("proposed_taxonomy")
         if proposed:
-            blocks.append({"type": "table", "heading": "데이터 기반 분류체계 제안",
+            if tax.get("source") == "doc":
+                heading = "운영 분류체계 기준 배정"
+                note = "팀 확정 분류체계(taxonomy.md) 기준. 분류 코드가 없는 건은 요청 원문으로 자동 배정함."
+            else:
+                heading = "데이터 기반 분류체계 제안"
+                note = "실 데이터에서 도출한 제안임. 팀 검토 후 확정 시 다음 달부터 코드 기반 집계로 전환."
+            blocks.append({"type": "table", "heading": heading,
                            "columns": ["코드", "유형명", "정의", {"label": "해당 건수", "cls": "num"}],
                            "rows": [[t.get("code", ""), t.get("name", ""), t.get("definition", ""),
                                      {"v": types.get(t.get("name"), {}).get("count", 0), "cls": "num brand"}] for t in proposed],
-                           "note": "실 데이터에서 도출한 제안임. 팀 검토 후 확정 시 다음 달부터 코드 기반 집계로 전환."})
+                           "note": note})
         b = self.insight_block("type")
         if b:
             blocks.append(b)
@@ -565,7 +585,11 @@ class Composer:
             basis.append("처리시간은 담당자 처리 시작~완료 시각 기준, 모든 지표는 한국 표준시(KST)로 산정.")
         tax = self.s["meta"]["taxonomy"]
         if tax["mode"] != "coded":
-            basis.append(f"유형 분류는 코드 {tax['coverage_pct']}% + 원문 추정 {tax['inferred_rows']}건을 합산한 참고치.")
+            if tax.get("source") == "doc":
+                basis.append(f"유형 분류는 팀 확정 분류체계(taxonomy.md) 기준 — "
+                             f"코드 {tax['coverage_pct']}% + 원문 기반 자동 배정 {tax['inferred_rows']}건.")
+            else:
+                basis.append(f"유형 분류는 코드 {tax['coverage_pct']}% + 원문 추정 {tax['inferred_rows']}건을 합산한 참고치.")
         basis += self.n.get("basis_notes") or []
         blocks.append({"type": "insight", "title": "집계 기준 안내", "items": basis})
         watch = self.n.get("next_month_watch") or []

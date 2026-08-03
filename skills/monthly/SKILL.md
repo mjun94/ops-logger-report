@@ -1,6 +1,6 @@
 ---
 name: monthly
-description: 운영 로그 월간 추출 JSON 경로 하나로 월간 운영 보고서(Chart.js 슬라이드 HTML)와 시사점을 생성한다. 사용자가 월간 보고서·운영 보고·Ops Logger 보고서 작성을 요청할 때 사용. 경로 없이 호출하면 후보 데이터 파일을 찾아 제시하고, 팀 프로필이 없으면 그 자리에서 만든다. 집계 오버뷰를 보여주고 승인을 받은 뒤 보고서를 만든다. 운영 분류체계가 없는 팀은 데이터에서 분류체계를 도출해 함께 제안한다.
+description: 운영 로그 월간 추출 JSON 경로 하나로 월간 운영 보고서(Chart.js 슬라이드 HTML)와 시사점을 생성한다. 사용자가 월간 보고서·운영 보고·Ops Logger 보고서 작성을 요청할 때 사용. 경로 없이 호출하면 후보 데이터 파일을 찾아 제시하고, 팀 프로필이 없으면 그 자리에서 만든다. 집계 오버뷰를 보여주고 승인을 받은 뒤 보고서를 만든다. 팀이 확정한 분류체계 문서(taxonomy.md)가 있으면 그 기준으로 유형을 배정하고, 없는 팀은 데이터에서 분류체계를 도출해 함께 제안한다.
 argument-hint: "<데이터.json 경로>"
 ---
 
@@ -19,6 +19,7 @@ argument-hint: "<데이터.json 경로>"
 ```
 우리팀-운영보고/                          ← 팀 루트
 ├── profile.json / baselines.json         설정 (평면 유지, 누적 파일)
+├── taxonomy.md                            팀 확정 분류체계 문서 (선택 — 있으면 배정 기준)
 ├── data/…                                입력 — 사용자가 정리한 대로 둔다
 ├── report/<대상연도>/…보고서.html         산출물 (스크립트가 만든다)
 └── report-work/                          중간 산출물 (매 실행 덮어씀)
@@ -69,7 +70,8 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/init_profile.py" <데이터.json>
 | `undercount_risk` 있음 | 로깅일 기준 추출이라 월말 요청 누락 가능. 요청일 기준 재추출을 권하고, 안 되면 각주로 남기고 진행 |
 | `has_started_at: false` | 처리시간 산출 불가. 다른 필드로 대체 계산 금지. 관련 지표는 자동 생략되고 각주가 붙는다 |
 | `requester_name_available: false` | 요청자 집중도는 조직+부서 대체 집계 (각주 자동) |
-| `taxonomy.mode`가 `coded` 아님 | 3단계로 분류체계를 도출한다 |
+| `taxonomy.mode`가 `coded` 아님 + `taxonomy.doc_found: true` | 3단계에서 팀 확정 문서(taxonomy.md) 기준으로 배정한다 |
+| `taxonomy.mode`가 `coded` 아님 + `taxonomy.doc_found: false` | 3단계로 분류체계를 도출한다 |
 
 ## 2. 오버뷰 승인 — 승인 없이 3단계로 가지 말 것
 
@@ -83,11 +85,15 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/init_profile.py" <데이터.json>
 | 총 건수 | `total` (운영일 `working_days`일, 일평균 `daily_avg`건) |
 | 전월 비교 | 베이스라인 개월 수. 0이면 "첫 보고서 — 비교 없이 생성" |
 | 채널 구성 | `channels` 상위 |
-| 유형 구성 | `types` 상위 3개 + `taxonomy.mode` (`coded` 아니면 "분류체계를 도출해 제안 예정") |
+| 유형 구성 | `types` 상위 3개 + 분류 기준 — `coded`면 코드 기반, 아니면 `doc_found`에 따라 "팀 분류체계(taxonomy.md) 기준 배정 예정" / "분류체계를 도출해 제안 예정" |
 | 처리시간 | `duration_overall` 있으면 평균·중위, 없으면 "산출 불가" |
 | 05장 분석 축 | `meta.org_dimension` — `company`면 조직별, `dept`면 **요청자 부서별**(한 회사만 담당하는 팀). `meta.org_dimension_reason`을 근거로 함께 보여주고, 의도와 다르면 프로필 `org_dimension`을 고정하면 된다고 알려 준다 |
 | 데이터 한계 | 위 표에서 걸린 항목 |
 | 저장 위치 | `report/<대상연도>/` |
+
+`coded`가 아니고 `doc_found: false`면 표 아래에 안내 한 줄을 붙인다 — **질문이 아니다. 응답을 요구하지 말고 그냥 진행한다.**
+
+> 팀 분류체계 문서(taxonomy.md)가 없어 자동 도출로 진행합니다. 확정된 체계가 있으면 팀 루트에 `taxonomy.md`로 저장해 두시면 다음부터 그 기준으로 배정됩니다.
 
 ### 확인 질문 — 같은 메시지에서 한 번에
 
@@ -126,7 +132,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
     --holidays 2026-07-17 --out report-work/stats.json
 ```
 
-`taxonomy.mode`가 `coded`가 아니면 분류체계를 먼저 도출해 같은 재집계에 함께 넣는다. `taxonomy-builder`에 `stats.json`의 `text_corpus`를 넘겨 받은 결과를 `report-work/taxonomy.json`으로 저장한다.
+`taxonomy.mode`가 `coded`가 아니면 유형 배정을 먼저 만들어 같은 재집계에 함께 넣는다. `taxonomy-builder`에 `stats.json`의 `text_corpus`를 넘기되, **`taxonomy.doc_found`가 `true`면 `doc_path`의 taxonomy.md 내용도 함께 넘긴다** — 그러면 builder는 체계를 도출하지 않고 문서의 유형으로 배정만 한다(배정 모드). 받은 결과를 `report-work/taxonomy.json`으로 저장한다.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
@@ -134,7 +140,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
     --out report-work/stats.json
 ```
 
-제안 분류체계는 04 슬라이드에 자동 수록된다. `review_points`는 팀이 확정 전에 판단할 경계 사례이므로 사용자에게 그대로 전달한다.
+04 슬라이드는 `source`에 따라 자동으로 달라진다 — `derived`면 "제안 분류체계", `doc`면 팀 확정 체계 기준 배정으로 표기된다. `review_points`는 어느 모드든 사용자에게 그대로 전달한다 — 도출 모드에서는 확정 전 판단할 경계 사례, 배정 모드에서는 문서에 없는 유형 패턴 등 체계 보완의 근거다.
 
 **부재 일정과 특이 이벤트는 재집계 대상이 아니다.** 다음 단계에서 이렇게 쓰인다.
 
@@ -148,6 +154,8 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/aggregate.py" <데이터.json> \
 ## 4. 시사점 작성 — 이 보고서의 핵심
 
 `insight-analyst`에 `stats.json`, `baselines.json`, **2단계에서 받은 부재 일정·특이 이벤트·전월 팔로업 답변**, 프로필 `insight_frame`을 전달해 `narrative.json`을 받는다. 사용자가 "없음"이라고 답했으면 그 사실도 그대로 전달한다 — 부재가 없었다는 정보 자체가 처리량 해석의 근거다.
+
+**taxonomy.md가 있으면(`doc_found: true`) 그 내용도 함께 전달한다** — 유형 정의·팀 용어가 시사점 서술의 근거가 된다. 이건 `coded` 팀도 마찬가지다(집계에는 안 쓰여도 해석 컨텍스트로는 쓰인다).
 
 이어서 `insight-critic`에 `narrative.json` + 같은 입력을 넘겨 검증한다. `verdict: revise`면 `blocking` 지적을 `insight-analyst`에 되돌려 수정본을 받는다. **최대 2회** 반복하고, 그래도 남으면 해당 주장을 삭제하거나 가설로 낮춘다.
 
@@ -179,7 +187,11 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/update_baselines.py" \
 
 - 생성된 파일 경로, 총건수·슬라이드 수
 - 데이터 한계로 생략된 지표가 있으면 그 사실
-- 분류체계를 새로 제안했다면 확정 절차 (확정 후 `profile.json`의 `taxonomy_map`에 반영하면 다음 달부터 코드 기반 집계로 전환)
+- 분류체계를 새로 제안했다면(`source: derived`) 확정 안내: **"확정하시면 taxonomy.md로 저장해 다음 달부터 이 기준으로 배정합니다"**
 - 다음 달 확인 포인트
+
+### 제안 분류체계 확정 → taxonomy.md 저장
+
+사용자가 제안을 확정하겠다고 답하면(이번 대화든 나중이든), `report-work/taxonomy.json`의 체계를 [references/taxonomy-template.md](references/taxonomy-template.md) 형식의 md로 변환해 **팀 루트에 `taxonomy.md`로 저장**한다. 수정 의견이 붙은 확정이면 반영해서 저장한다. 이후 매달 도출 없이 이 문서 기준으로 배정되어 월간 추이가 안정된다. 접수 시스템에 분류 코드 입력이 시작되면 `profile.json`의 `taxonomy_map`을 채워 코드 기반 정식 집계로 전환된다는 것도 알린다.
 
 스키마는 [references/schemas.md](references/schemas.md), 목차·디자인 규격은 [references/report-spec.md](references/report-spec.md) 참조.

@@ -101,6 +101,16 @@ def infer_team_root(data_path):
     return d
 
 
+def find_taxonomy_doc(root):
+    """팀 루트의 운영 분류체계 문서(taxonomy.md) 경로. 없으면 None.
+
+    팀이 문서로 확정한 분류체계다. 있으면 taxonomy-builder가 체계를 새로
+    도출하지 않고 이 문서의 유형으로 각 건을 배정만 한다.
+    """
+    p = os.path.join(root, "taxonomy.md")
+    return p if os.path.isfile(p) else None
+
+
 def report_path(root, month, filename):
     """<팀 루트>/report/<대상연도>/<파일명>.
 
