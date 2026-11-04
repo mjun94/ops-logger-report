@@ -7,10 +7,14 @@
   ops_logger.py --email me@vntgcorp.com validate <items.json>
   ops_logger.py --email me@vntgcorp.com insert <items.json> [--yes]
   ops_logger.py --email me@vntgcorp.com delete <id>
+  ops_logger.py --email me@vntgcorp.com companies [검색어]      # 계열사 목록 (요청회사 선택지)
+  ops_logger.py --email me@vntgcorp.com company-hint <이메일>   # 이전에 확정한 요청회사
 
 items.json = [{channel,date,processStartAt,processEndAt,summary,raw_input,
                l1_code,l2_code,l3_code,requester_email?,requester_*...}, ...]
 requester_email이 있으면 멤버 검색으로 requester_* 를 채운다. assignee_* 는 실행자 본인으로 채운다.
+original_requester_company(요청회사·담당회사)는 요청자가 브이엔티지 소속이거나 외부(그룹 도메인 아님)일 때 필수이며
+계열사 목록(companies)에 있는 이름이어야 한다. 등록이 끝나면 ~/.ops-logger/requester-company.json에 이메일→요청회사를 기억한다.
 """
 import argparse, json, os, re, sys, urllib.parse, urllib.request, datetime
 
@@ -27,6 +31,31 @@ def config_email():
         return ""
 DURATIONS = {5,10,15,20,25,30,35,40,45,50,55,60,90,120}
 GROUP_DOMAINS = ("vntgcorp.com", "seah.co.kr")
+VNTG_COMPANY = "브이엔티지"
+EXTERNAL_NAME = "외부"   # 웹 등록 화면과 동일: 외부 요청자는 이름 대신 '외부'
+MEMORY_PATH = os.path.join(CONF_DIR, "requester-company.json")
+
+def load_memory():
+    try: return json.load(open(MEMORY_PATH, encoding="utf-8"))
+    except Exception: return {}
+
+def save_memory(mem):
+    os.makedirs(CONF_DIR, exist_ok=True)
+    json.dump(mem, open(MEMORY_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+_companies_cache = None
+def companies(email, q=""):
+    """계열사(법인) 이름 목록. 조직 목록 lvl 3 중 org_type C. 웹 등록 화면의 요청회사 검색과 같은 소스."""
+    global _companies_cache
+    if _companies_cache is None:
+        data = api(email, "GET", "/org/list", {"lvl": 3}) or []
+        if isinstance(data, dict): data = data.get("list", [])
+        _companies_cache = [o.get("org_name") for o in data if o.get("org_type") == "C" and o.get("org_name")]
+    return [c for c in _companies_cache if q.lower() in c.lower()] if q else list(_companies_cache)
+
+def needs_company_check(it):
+    """요청회사를 따로 확인해야 하는 건: 브이엔티지 소속 요청자, 또는 외부 요청자"""
+    return it.get("mem_type") == "n03" or (it.get("requester_company") or "") == VNTG_COMPANY
 
 def api(email, method, path, params=None, body=None):
     url = BASE + path + (("?" + urllib.parse.urlencode(params)) if params else "")
@@ -62,8 +91,13 @@ def validate_codes(tax, it):
         if has_child: errs.append(f"{l2}는 L3가 있으므로 l3_code 필수 (규칙 11)")
     return errs
 
-def validate_item(tax, it):
+def validate_item(tax, it, email=None):
     errs = validate_codes(tax, it)
+    if needs_company_check(it):
+        oc = (it.get("original_requester_company") or "").strip()
+        who = "외부 요청자" if it.get("mem_type") == "n03" else "브이엔티지 소속 요청자"
+        if not oc: errs.append(f"{who}는 요청회사(original_requester_company) 필수 — 사용자에게 확인")
+        elif email and oc not in companies(email): errs.append(f"요청회사 '{oc}'가 계열사 목록에 없음 (companies 로 확인)")
     if it.get("channel") not in ("chat","email","phone","face"): errs.append("channel은 chat/email/phone/face")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", it.get("date","")): errs.append("date는 YYYY-MM-DD")
     for k in ("processStartAt","processEndAt"):
@@ -89,17 +123,23 @@ def member(email, q):
     exact = [m for m in data if (m.get("email") or "").lower() == q.lower()]
     return (exact or data)[:5]
 
-def requester_fields(email, req_email):
+def requester_fields(email, req_email, original_company=None, external_company=None):
+    """멤버 검색으로 요청자 필드를 채운다.
+    - 그룹 멤버: 소속 회사가 requester_company. 브이엔티지 소속이면 original_requester_company는 호출자가 준 요청회사(없으면 비움 → validate에서 걸림)
+    - 외부(멤버 아님): 웹 화면과 같이 이름 '외부', requester_company는 외부 회사명(없으면 도메인), mem_type n03.
+      original_requester_company는 호출자가 준 담당 계열사"""
     ms = member(email, req_email)
     if ms and (ms[0].get("email") or "").lower() == req_email.lower():
-        m = ms[0]
-        return {"requester_name": m.get("name",""), "requester_company": m.get("rep_org_name",""),
-                "original_requester_company": m.get("rep_org_name",""), "requester_dept": m.get("org_name",""),
+        m = ms[0]; comp = m.get("rep_org_name","")
+        return {"requester_name": m.get("name",""), "requester_company": comp,
+                "original_requester_company": (original_company or "").strip() if comp == VNTG_COMPANY else comp,
+                "requester_dept": m.get("org_name",""),
                 "requester_grade": m.get("job_duty_name",""), "requester_position": m.get("job_position_name",""),
                 "requester_contact": "", "mem_type": m.get("mem_type") or "n01"}
-    domain = req_email.split("@")[-1]
-    return {"requester_name": req_email.split("@")[0], "requester_company": domain, "original_requester_company": domain,
-            "requester_dept": "", "requester_grade": "", "requester_position": "", "requester_contact": "", "mem_type": "n03"}
+    ext = (external_company or req_email.split("@")[-1]).strip()
+    return {"requester_name": EXTERNAL_NAME, "requester_company": ext, "original_requester_company": (original_company or "").strip(),
+            "requester_dept": "", "requester_grade": "", "requester_position": "", "requester_contact": "", "mem_type": "n03",
+            "request_company": ext, "request_name": EXTERNAL_NAME}
 
 def assignee_fields(email):
     ms = member(email, email)
@@ -117,6 +157,8 @@ def main():
     p = sub.add_parser("validate"); p.add_argument("file")
     p = sub.add_parser("insert"); p.add_argument("file"); p.add_argument("--yes", action="store_true")
     p = sub.add_parser("delete"); p.add_argument("id")
+    p = sub.add_parser("companies"); p.add_argument("query", nargs="?", default="")
+    p = sub.add_parser("company-hint"); p.add_argument("email_of_requester")
     a = ap.parse_args()
     if not a.email:
         import subprocess
@@ -140,25 +182,35 @@ def main():
         for i, it in enumerate(items, 1):
             it = dict(it)
             it["raw_input"] = mask(it.get("raw_input","")); it["summary"] = mask(it.get("summary",""))
-            if it.get("requester_email") and not it.get("requester_name"):
-                it.update(requester_fields(a.email, it["requester_email"]))
-            it.pop("requester_email", None)
-            errs = validate_item(tax, it)
+            req_email = it.pop("requester_email", None)
+            if req_email and not it.get("requester_name"):
+                it.update(requester_fields(a.email, req_email, it.get("original_requester_company"), it.get("requester_company")))
+            errs = validate_item(tax, it, a.email)
             tag = f"[{i}] {it.get('summary','')}"
             if errs: ok = False; print(f"✗ {tag}: " + "; ".join(errs))
-            else: print(f"✓ {tag} → {it.get('l1_code')}/{it.get('l2_code')}/{it.get('l3_code')} {it.get('channel')} {it.get('date')} {it.get('processStartAt')}-{it.get('processEndAt')} 요청자 {it.get('requester_name')}({it.get('requester_company')})")
+            else: print(f"✓ {tag} → {it.get('l1_code')}/{it.get('l2_code')}/{it.get('l3_code')} {it.get('channel')} {it.get('date')} {it.get('processStartAt')}-{it.get('processEndAt')} 요청자 {it.get('requester_name')}({it.get('requester_company')}) 요청회사 {it.get('original_requester_company')}")
+            it["_req_email"] = req_email
             it.update(asg); prepared.append(it)
         if a.cmd == "validate" or not ok:
             sys.exit(0 if ok else 1)
         if not a.yes:
             print("--yes 없이 실행됨: 등록하지 않음"); sys.exit(0)
         before = (api(a.email, "GET", "/admin/vos/sr/list", {"requested_at": prepared[0]["date"], "count": 1, "offset": 0}) or {}).get("tot_count", 0)
+        mem = load_memory()
         for it in prepared:
+            req_email = it.pop("_req_email", None)
             api(a.email, "PUT", "/admin/vos/sr/info", body=it); print(f"등록: {it['summary']}")
+            if req_email and needs_company_check(it) and it.get("original_requester_company"):
+                mem[req_email.lower()] = it["original_requester_company"]
+        save_memory(mem)
         after = (api(a.email, "GET", "/admin/vos/sr/list", {"requested_at": prepared[0]["date"], "count": 1, "offset": 0}) or {}).get("tot_count", 0)
         print(f"당일 건수 {before} → {after} (+{after-before}, 요청 {len(prepared)})")
     elif a.cmd == "delete":
         api(a.email, "DELETE", "/admin/vos/sr/info", {"id": a.id}); print("삭제:", a.id)
+    elif a.cmd == "companies":
+        print(json.dumps(companies(a.email, a.query), ensure_ascii=False, indent=1))
+    elif a.cmd == "company-hint":
+        print(json.dumps({"email": a.email_of_requester, "company": load_memory().get(a.email_of_requester.lower())}, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
