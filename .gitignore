@@ -7,6 +7,7 @@ stats.json
 narrative.json
 report.json
 taxonomy.json
+!plugins/ops-logger/skills/insert-today/references/taxonomy.json
 probe.json
 report-work/
 *.html

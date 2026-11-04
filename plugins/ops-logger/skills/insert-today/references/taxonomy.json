@@ -1,0 +1,621 @@
+{
+ "items": [
+  {
+   "code": "01",
+   "parent_code": null,
+   "level": 1,
+   "name": "GWS 운영",
+   "is_active": true
+  },
+  {
+   "code": "02",
+   "parent_code": null,
+   "level": 1,
+   "name": "계정·조직 관리",
+   "is_active": true
+  },
+  {
+   "code": "03",
+   "parent_code": null,
+   "level": 1,
+   "name": "전자결재 운영",
+   "is_active": true
+  },
+  {
+   "code": "04",
+   "parent_code": null,
+   "level": 1,
+   "name": "세아웍스 운영",
+   "is_active": true
+  },
+  {
+   "code": "05",
+   "parent_code": null,
+   "level": 1,
+   "name": "업무 미팅",
+   "is_active": true
+  },
+  {
+   "code": "06",
+   "parent_code": null,
+   "level": 1,
+   "name": "감사 및 컴플라이언스",
+   "is_active": true
+  },
+  {
+   "code": "0101",
+   "parent_code": "01",
+   "level": 2,
+   "name": "라이선스 관리",
+   "is_active": true
+  },
+  {
+   "code": "0102",
+   "parent_code": "01",
+   "level": 2,
+   "name": "GWS 콘솔 관리",
+   "is_active": true
+  },
+  {
+   "code": "0103",
+   "parent_code": "01",
+   "level": 2,
+   "name": "보안 정책 관리",
+   "is_active": true
+  },
+  {
+   "code": "0104",
+   "parent_code": "01",
+   "level": 2,
+   "name": "메일 관리",
+   "is_active": true
+  },
+  {
+   "code": "0106",
+   "parent_code": "01",
+   "level": 2,
+   "name": "AI 서비스 지원",
+   "is_active": true,
+   "desc": "Gemini·NotebookLM 등 GWS AI 기능의 문의·오류·사용량 한도·정책 대응"
+  },
+  {
+   "code": "0107",
+   "parent_code": "01",
+   "level": 2,
+   "name": "권한 관리",
+   "is_active": true,
+   "desc": "드라이브·문서·서비스 등 접근 권한 부여·회수·확인 (그룹 생성·변경은 메일 그룹)"
+  },
+  {
+   "code": "0105",
+   "parent_code": "01",
+   "level": 2,
+   "name": "기타 운영",
+   "is_active": true,
+   "desc": "드라이브·캘린더·Chat 등 GWS 서비스 설정 지원 및 사용자 안내 (AI 서비스·권한 업무 제외)"
+  },
+  {
+   "code": "0201",
+   "parent_code": "02",
+   "level": 2,
+   "name": "입사 처리",
+   "is_active": true
+  },
+  {
+   "code": "0202",
+   "parent_code": "02",
+   "level": 2,
+   "name": "퇴사 처리",
+   "is_active": true
+  },
+  {
+   "code": "0203",
+   "parent_code": "02",
+   "level": 2,
+   "name": "정보 변경",
+   "is_active": true
+  },
+  {
+   "code": "0204",
+   "parent_code": "02",
+   "level": 2,
+   "name": "그룹·권한 관리",
+   "is_active": false
+  },
+  {
+   "code": "0205",
+   "parent_code": "02",
+   "level": 2,
+   "name": "조직도 연동",
+   "is_active": false
+  },
+  {
+   "code": "0206",
+   "parent_code": "02",
+   "level": 2,
+   "name": "인증 관리",
+   "is_active": true
+  },
+  {
+   "code": "0301",
+   "parent_code": "03",
+   "level": 2,
+   "name": "결재 양식",
+   "is_active": true
+  },
+  {
+   "code": "0302",
+   "parent_code": "03",
+   "level": 2,
+   "name": "결재 문서",
+   "is_active": true
+  },
+  {
+   "code": "0303",
+   "parent_code": "03",
+   "level": 2,
+   "name": "결재 오류·장애",
+   "is_active": true
+  },
+  {
+   "code": "0401",
+   "parent_code": "04",
+   "level": 2,
+   "name": "운영 개발",
+   "is_active": true
+  },
+  {
+   "code": "0402",
+   "parent_code": "04",
+   "level": 2,
+   "name": "운영 지원",
+   "is_active": true
+  },
+  {
+   "code": "0403",
+   "parent_code": "04",
+   "level": 2,
+   "name": "기타 지원",
+   "is_active": true
+  },
+  {
+   "code": "0501",
+   "parent_code": "05",
+   "level": 2,
+   "name": "내부 미팅",
+   "is_active": true
+  },
+  {
+   "code": "0502",
+   "parent_code": "05",
+   "level": 2,
+   "name": "외부 미팅",
+   "is_active": true
+  },
+  {
+   "code": "0503",
+   "parent_code": "05",
+   "level": 2,
+   "name": "프로젝트 미팅",
+   "is_active": false
+  },
+  {
+   "code": "0601",
+   "parent_code": "06",
+   "level": 2,
+   "name": "내부 감사",
+   "is_active": true
+  },
+  {
+   "code": "0602",
+   "parent_code": "06",
+   "level": 2,
+   "name": "외부 감사",
+   "is_active": true
+  },
+  {
+   "code": "0603",
+   "parent_code": "06",
+   "level": 2,
+   "name": "ITGC",
+   "is_active": true
+  },
+  {
+   "code": "010101",
+   "parent_code": "0101",
+   "level": 3,
+   "name": "라이선스 현황 관리",
+   "is_active": true,
+   "desc": "조직 내 GWS 라이선스 보유 현황 모니터링 및 관리대장 유지"
+  },
+  {
+   "code": "010102",
+   "parent_code": "0101",
+   "level": 3,
+   "name": "라이선스 할당·회수",
+   "is_active": true,
+   "desc": "사용자 입·퇴사 및 조직 변경에 따른 라이선스 배정 및 회수 처리"
+  },
+  {
+   "code": "010201",
+   "parent_code": "0102",
+   "level": 3,
+   "name": "관리자 콘솔 설정",
+   "is_active": true,
+   "desc": "Google Admin Console 내 조직·서비스 설정 및 정책 구성 (OU별 서비스 활성화·비활성화 포함)"
+  },
+  {
+   "code": "010202",
+   "parent_code": "0102",
+   "level": 3,
+   "name": "도메인·DNS 관리",
+   "is_active": true,
+   "desc": "도메인 인증, MX·SPF·DKIM·DMARC 등 DNS 레코드 관리"
+  },
+  {
+   "code": "010203",
+   "parent_code": "0102",
+   "level": 3,
+   "name": "서비스 활성화·비활성화",
+   "is_active": false
+  },
+  {
+   "code": "010301",
+   "parent_code": "0103",
+   "level": 3,
+   "name": "접근 제어 정책 설정",
+   "is_active": true,
+   "desc": "IP 허용 목록, 2단계 인증 정책, 세션 제어 등 접근 보안 정책 구성"
+  },
+  {
+   "code": "010302",
+   "parent_code": "0103",
+   "level": 3,
+   "name": "데이터 보호 정책 운영",
+   "is_active": true,
+   "desc": "DLP 정책 설정, 민감 정보 유출 방지 규칙 관리"
+  },
+  {
+   "code": "010303",
+   "parent_code": "0103",
+   "level": 3,
+   "name": "보안 이슈 대응",
+   "is_active": true,
+   "desc": "보안 경보·이상 로그인·해킹 의심 등 사건성 대응 — 사건 관련 후속 건(로그 추출·IP 차단·비밀번호 조치 등)도 이 항목으로 통일"
+  },
+  {
+   "code": "010304",
+   "parent_code": "0103",
+   "level": 3,
+   "name": "감사 로그 관리",
+   "is_active": true,
+   "desc": "활동 로그 수집·분석·보관 정책 운영 (감사 목적의 계획된 자료 제출은 감사 및 컴플라이언스, 보안 사건 대응 중 로그 확인은 보안 이슈 대응)"
+  },
+  {
+   "code": "010401",
+   "parent_code": "0104",
+   "level": 3,
+   "name": "메일 그룹",
+   "is_active": true,
+   "desc": "메일 그룹(Google Groups) 생성·변경·삭제 및 멤버 관리 — 그룹 생성·변경은 이 항목으로 일원화"
+  },
+  {
+   "code": "010402",
+   "parent_code": "0104",
+   "level": 3,
+   "name": "메일 서비스",
+   "is_active": true,
+   "desc": "메일 라우팅, 스팸·바이러스 필터 등"
+  },
+  {
+   "code": "020101",
+   "parent_code": "0201",
+   "level": 3,
+   "name": "계정 생성",
+   "is_active": true,
+   "desc": "신규 입사자 GWS 계정 생성 및 초기 서비스 접근 권한 설정"
+  },
+  {
+   "code": "020102",
+   "parent_code": "0201",
+   "level": 3,
+   "name": "조직 등록 및 라이선스 배정",
+   "is_active": true,
+   "desc": "신규 사용자 조직도 등록 및 라이선스·그룹 배정 일괄 처리"
+  },
+  {
+   "code": "020201",
+   "parent_code": "0202",
+   "level": 3,
+   "name": "계정 비활성화·삭제",
+   "is_active": true,
+   "desc": "퇴사·휴직자 계정 즉시 비활성화, 데이터 보존 후 삭제 처리"
+  },
+  {
+   "code": "020202",
+   "parent_code": "0202",
+   "level": 3,
+   "name": "라이선스 회수 및 조직 제거",
+   "is_active": true,
+   "desc": "퇴사 처리 시 라이선스 회수, 그룹·조직도 제거 일괄 처리"
+  },
+  {
+   "code": "020301",
+   "parent_code": "0203",
+   "level": 3,
+   "name": "계정 수정·이관",
+   "is_active": true,
+   "desc": "조직 이동·개명·겸직·사번 변경 등 계정 정보 변경 및 데이터 이관 — 세아웍스 조직도 반영·수정 요청 포함"
+  },
+  {
+   "code": "020302",
+   "parent_code": "0203",
+   "level": 3,
+   "name": "조직개편",
+   "is_active": true,
+   "desc": "조직개편에 따른 부서 신설·변경 및 사용자 일괄 이동 처리"
+  },
+  {
+   "code": "020601",
+   "parent_code": "0206",
+   "level": 3,
+   "name": "비밀번호 관리",
+   "is_active": true,
+   "desc": "비밀번호 정책·초기화·잠금 해제 처리 — 대상 시스템 불문(GWS·세아웍스·해외법인 메일 등)"
+  },
+  {
+   "code": "020602",
+   "parent_code": "0206",
+   "level": 3,
+   "name": "2단계 인증 관리",
+   "is_active": true,
+   "desc": "2FA 등록·해제, 인증키 분실 시 복구 및 예외 처리 (대상 시스템 불문)"
+  },
+  {
+   "code": "020603",
+   "parent_code": "0206",
+   "level": 3,
+   "name": "SSO 연동 관리",
+   "is_active": true,
+   "desc": "SSO 연동 설정 및 장애 대응"
+  },
+  {
+   "code": "030101",
+   "parent_code": "0301",
+   "level": 3,
+   "name": "양식 추가",
+   "is_active": true,
+   "desc": "새로운 결재 양식 화면 설계 및 개발"
+  },
+  {
+   "code": "030102",
+   "parent_code": "0301",
+   "level": 3,
+   "name": "양식 수정",
+   "is_active": true,
+   "desc": "기존 양식의 필드명, 문구, 레이아웃 변경"
+  },
+  {
+   "code": "030103",
+   "parent_code": "0301",
+   "level": 3,
+   "name": "설정 변경",
+   "is_active": true,
+   "desc": "결재 관련 설정 조정"
+  },
+  {
+   "code": "030201",
+   "parent_code": "0302",
+   "level": 3,
+   "name": "문서 삭제",
+   "is_active": true,
+   "desc": "기안 중·완료 결재문서 삭제"
+  },
+  {
+   "code": "030202",
+   "parent_code": "0302",
+   "level": 3,
+   "name": "문서 수정",
+   "is_active": true,
+   "desc": "결재문서 문구 및 기타 수정"
+  },
+  {
+   "code": "030301",
+   "parent_code": "0303",
+   "level": 3,
+   "name": "결재 오류",
+   "is_active": true,
+   "desc": "결재 진행 불가, 양식 오류 등 결재 기능 오류"
+  },
+  {
+   "code": "030302",
+   "parent_code": "0303",
+   "level": 3,
+   "name": "연동 오류",
+   "is_active": true,
+   "desc": "결재 관련 외부 시스템 연동 오류 원인 분석 및 조치 (결재 외 연동 문의는 연동·인터페이스 지원)"
+  },
+  {
+   "code": "030303",
+   "parent_code": "0303",
+   "level": 3,
+   "name": "기타",
+   "is_active": true,
+   "desc": "알림 미발송 등 기타 오류 및 문의"
+  },
+  {
+   "code": "040101",
+   "parent_code": "0401",
+   "level": 3,
+   "name": "신규 개발",
+   "is_active": true,
+   "desc": "신규 기능 개발"
+  },
+  {
+   "code": "040102",
+   "parent_code": "0401",
+   "level": 3,
+   "name": "기능 개선",
+   "is_active": true,
+   "desc": "기존 기능 개선 및 오류 수정"
+  },
+  {
+   "code": "040103",
+   "parent_code": "0401",
+   "level": 3,
+   "name": "오류 조치",
+   "is_active": false
+  },
+  {
+   "code": "040201",
+   "parent_code": "0402",
+   "level": 3,
+   "name": "설정 지원",
+   "is_active": true,
+   "desc": "퀵링크, 배너, 팝업, 보안서약, SMS, 클릭투콜 등 기능 설정 및 지원 (비밀번호·2단계 인증 등 인증 업무 제외)"
+  },
+  {
+   "code": "040202",
+   "parent_code": "0402",
+   "level": 3,
+   "name": "사용 안내",
+   "is_active": true,
+   "desc": "세아웍스 포털·모바일 기능 사용방법 안내"
+  },
+  {
+   "code": "040205",
+   "parent_code": "0402",
+   "level": 3,
+   "name": "연동·인터페이스 지원",
+   "is_active": true,
+   "desc": "ERP·세일즈포스·SAP 등 외부 시스템 연동의 스펙·정의서·데이터·테스트 문의 대응 + 세아웍스 조직도 연계 모듈(인사연동·동기화) 운영 (개발·수정 발생 시 운영 개발)"
+  },
+  {
+   "code": "040203",
+   "parent_code": "0402",
+   "level": 3,
+   "name": "문의 대응",
+   "is_active": true,
+   "desc": "원문에 대상(결재·연동·계정·기능·설정·일정)이 전혀 없어 어느 유형에도 넣을 수 없는 문의 — \"~문의\"·\"~확인 요청\"·\"~대응\"이라는 표현은 근거가 되지 않으며, 무엇에 대한 문의인지 알 수 있으면 그 유형으로 간다. 최후 수단"
+  },
+  {
+   "code": "040204",
+   "parent_code": "0402",
+   "level": 3,
+   "name": "기타",
+   "is_active": false
+  },
+  {
+   "code": "040301",
+   "parent_code": "0403",
+   "level": 3,
+   "name": "타 시스템 이관·안내",
+   "is_active": true,
+   "desc": "SHE·SELIS·SAP·법인차량·문서보안 등 팀 관할 외 시스템 문의를 접수해 담당 안내·이관"
+  },
+  {
+   "code": "040302",
+   "parent_code": "0403",
+   "level": 3,
+   "name": "안내·공지 발신",
+   "is_active": true,
+   "desc": "원 요청 없이 팀이 발신하는 공지·자료 전달·지식 전수 (처리결과 회신·후속 확인은 원 요청 유형 승계)"
+  },
+  {
+   "code": "040303",
+   "parent_code": "0403",
+   "level": 3,
+   "name": "기타·판단 불가",
+   "is_active": true,
+   "desc": "사담·원문 불충분 등 유형 판정 불가 건 (업무량 집계 시 제외 플래그)"
+  },
+  {
+   "code": "050101",
+   "parent_code": "0501",
+   "level": 3,
+   "name": "팀 내부 업무 협의",
+   "is_active": true,
+   "desc": "팀 내 현안 공유, 업무 방향성 협의 및 의사결정 회의 (내부 = VNTG 자사)"
+  },
+  {
+   "code": "050102",
+   "parent_code": "0501",
+   "level": 3,
+   "name": "유관부서 협업 미팅",
+   "is_active": true,
+   "desc": "타 부서와의 연계 업무, 이슈 공유 및 협조 요청 협의"
+  },
+  {
+   "code": "050201",
+   "parent_code": "0502",
+   "level": 3,
+   "name": "그룹 내 미팅",
+   "is_active": true,
+   "desc": "세아그룹 계열사 대상 업무 미팅 (요청 조직 기준 판정, 프로젝트 회의 포함)"
+  },
+  {
+   "code": "050202",
+   "parent_code": "0502",
+   "level": 3,
+   "name": "그룹 외 미팅",
+   "is_active": true,
+   "desc": "협력업체, Google 등 세아그룹 외 대상 미팅"
+  },
+  {
+   "code": "060101",
+   "parent_code": "0601",
+   "level": 3,
+   "name": "정기 계정 감사",
+   "is_active": true,
+   "desc": "반기별 전체 계정 유효성 점검, 미사용 계정 정리 및 보고"
+  },
+  {
+   "code": "060102",
+   "parent_code": "0601",
+   "level": 3,
+   "name": "권한 적정성 감사",
+   "is_active": true,
+   "desc": "부여 권한의 최소 권한 원칙 준수 여부 검토 및 조치"
+  },
+  {
+   "code": "060103",
+   "parent_code": "0601",
+   "level": 3,
+   "name": "보안 정책 준수 감사",
+   "is_active": true,
+   "desc": "비밀번호·MFA·공유 설정 등 보안 정책 이행 현황 점검"
+  },
+  {
+   "code": "060201",
+   "parent_code": "0602",
+   "level": 3,
+   "name": "감사 자료 제출 지원",
+   "is_active": true,
+   "desc": "외부 감사 기관 요청 자료 수집, 정리 및 적시 제출 지원"
+  },
+  {
+   "code": "060202",
+   "parent_code": "0602",
+   "level": 3,
+   "name": "법규·지침 준수 관리",
+   "is_active": true,
+   "desc": "개인정보보호법, 정보보안 지침 등 관련 법규 준수 여부 확인"
+  },
+  {
+   "code": "060301",
+   "parent_code": "0603",
+   "level": 3,
+   "name": "ITGC 통제 운영",
+   "is_active": true,
+   "desc": "IT 일반 통제(접근관리, 변경관리, 운영관리) 증적 수집 및 관리"
+  },
+  {
+   "code": "060302",
+   "parent_code": "0603",
+   "level": 3,
+   "name": "ITGC 결함 조치",
+   "is_active": true,
+   "desc": "감사에서 도출된 통제 결함 원인 분석, 개선 계획 수립 및 이행"
+  }
+ ]
+}
