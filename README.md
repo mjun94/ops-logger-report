@@ -162,3 +162,16 @@ ops-logger-report/
 ## 라이선스
 
 MIT — [LICENSE](./LICENSE)
+
+## Ops Logger 당일 등록 플러그인 (`ops-logger`)
+
+퇴근 전 한 번, 오늘 응대한 Google Chat·Gmail 문의를 골라 Ops Logger에 등록합니다. 수집·선택·분류는 Claude Code 안에서 하고 마지막 등록만 API로 보냅니다.
+
+```
+/plugin marketplace add mjun94/ops-logger-report
+/plugin install ops-logger@jun-plugins
+/ops-logger:setup            # 처음 한 번: 이메일 저장 + Google Chat 서버 등록 → /mcp 인증
+/ops-logger:insert-today     # 매일: 오늘 문의 수집 → 선택 → 분류 → 등록
+```
+
+사용 매뉴얼: Confluence 그룹웨어팀 > Ops Logger 운영 가시화 > "Ops Logger 당일 등록 플러그인 사용 매뉴얼". 클라이언트 시크릿은 담당자에게 1:1로 받습니다. 레포에는 넣지 않습니다.

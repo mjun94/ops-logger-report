@@ -17,6 +17,18 @@
       "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/mjun94/ops-logger-report"
+    },
+    {
+      "name": "ops-logger",
+      "displayName": "Ops Logger 당일 등록",
+      "description": "오늘 응대한 Google Chat·Gmail 문의를 골라 요약·분류·요청자 식별까지 마쳐 Ops Logger에 등록 (퇴근 전 1회)",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jun"
+      },
+      "source": "./plugins/ops-logger",
+      "category": "productivity",
+      "homepage": "https://github.com/mjun94/ops-logger-report"
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "name": "ops-logger",
+  "displayName": "Ops Logger 당일 등록",
+  "description": "오늘 내가 응대한 Google Chat·Gmail 문의를 모아 보여주고, 고른 건을 요약·분류·요청자 식별까지 마쳐 Ops Logger에 등록한다. 퇴근 전 한 번 실행.",
+  "version": "0.1.0",
+  "author": { "name": "Jun" },
+  "homepage": "https://github.com/mjun94/ops-logger-report",
+  "repository": "https://github.com/mjun94/ops-logger-report",
+  "license": "MIT",
+  "keywords": ["ops-logger", "google-chat", "gmail", "sr", "operations"]
+}
