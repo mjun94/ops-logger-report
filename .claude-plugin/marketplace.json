@@ -21,8 +21,8 @@
     {
       "name": "ops-logger",
       "displayName": "Ops Logger 당일 등록",
-      "description": "오늘 응대한 Google Chat·Gmail 문의를 골라 요약·분류·요청자 식별까지 마쳐 Ops Logger에 등록 (퇴근 전 1회)",
-      "version": "0.1.0",
+      "description": "오늘 또는 지정한 지난 날짜에 응대한 Google Chat·Gmail 문의를 골라 요약·분류·요청자 식별까지 마쳐 Ops Logger에 등록 (퇴근 전 1회, 빠진 날은 insert-date)",
+      "version": "0.2.0",
       "author": {
         "name": "Jun"
       },

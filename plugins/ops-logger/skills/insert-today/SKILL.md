@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, AskUserQuestion, mcp__gchat__search_messages, mcp__gc
 
 오늘 처리한 운영 문의를 Ops Logger에 등록한다. 수집·선택·정제·분류는 전부 이 대화 안에서 하고, 외부 호출은 마지막 등록 한 번뿐이다.
 
-입력: $ARGUMENTS (날짜 없으면 오늘, `--dry`면 등록 대신 검증까지만)
+입력: $ARGUMENTS (날짜 없으면 오늘, `--dry`면 등록 대신 검증까지만). 지난 날짜는 `/ops-logger:insert-date <날짜>`로도 된다
 
 ## 전제
 
@@ -22,7 +22,7 @@ allowed-tools: Bash, Read, AskUserQuestion, mcp__gchat__search_messages, mcp__gc
 
 세 가지를 한 번에 조회한다. 시간은 KST 당일 00:00 = 전날 15:00Z.
 
-- Chat DM: `mcp__gchat__search_messages` `searchParameters={startTime:"<전날>T15:00:00Z", conversationTypes:["DIRECT_MESSAGE"]}` pageSize 100, nextPageToken 있으면 이어서
+- Chat DM: `mcp__gchat__search_messages` `searchParameters={startTime:"<전날>T15:00:00Z", endTime:"<당일>T15:00:00Z", conversationTypes:["DIRECT_MESSAGE"]}` pageSize 100, nextPageToken 있으면 이어서
 - Chat 스페이스·그룹: 같은 호출에 `conversationTypes:["NAMED_SPACE","GROUP_CHAT"]`
 - Gmail: `mcp__claude_ai_Gmail__search_threads` query `after:<YYYY/MM/DD> before:<다음날 YYYY/MM/DD> (in:sent OR in:inbox)` view `THREAD_VIEW_SUMMARY`
 - 당일 등록분: `python3 "${CLAUDE_SKILL_DIR}/scripts/ops_logger.py" list-today --date <날짜>`
